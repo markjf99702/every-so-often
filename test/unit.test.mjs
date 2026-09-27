@@ -460,3 +460,18 @@ test('the store saves to localStorage, keeps sample data apart, and merges backu
   assert.throws(() => store.restoreBackup('{"app":"something-else"}'), /isn’t an Every So Often backup/);
   delete globalThis.localStorage;
 });
+
+// ---------- the offline copy ----------
+
+test('the service worker keeps every file the page needs', async () => {
+  const { readFile, readdir } = await import('node:fs/promises');
+  const root = new URL('../', import.meta.url);
+  const sw = await readFile(new URL('sw.js', root), 'utf8');
+  const shell = new Set([...sw.match(/const SHELL = \[([\s\S]*?)\];/)[1].matchAll(/'([^']+)'/g)].map(m => m[1]));
+  const need = ['index.html', 'icon.svg', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'];
+  for (const dir of ['js', 'css', 'fonts']) for (const f of await readdir(new URL(dir + '/', root))) need.push(`${dir}/${f}`);
+  for (const f of need) assert.ok(shell.has(f), `sw.js doesn’t keep ${f}`);
+  for (const f of shell) if (f !== './') await readFile(new URL(f, root)); // and every file it lists exists
+  const html = await readFile(new URL('index.html', root), 'utf8');
+  for (const [, f] of html.matchAll(/(?:href|src)="((?!https?:|#)[^"]+)"/g)) assert.ok(shell.has(f), `index.html uses ${f}, which sw.js doesn’t keep`);
+});

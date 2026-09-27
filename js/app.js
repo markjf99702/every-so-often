@@ -11,7 +11,7 @@ import { drive } from './sync.js';
 import { CATALOG, byKey } from './catalog.js';
 import { icsFor, googleLink, download } from './cal.js';
 import { sampleDoc } from './sample.js';
-import { app, esc, go, ICON, toast, sheet, sheetOpen, on, single } from './ui.js';
+import { app, esc, go, ICON, toast, sheet, on, single } from './ui.js';
 
 const SITE = 'https://junkdrawer.works/every-so-often/';
 const ui = { area: '', picks: [], screen: '' };
@@ -274,7 +274,7 @@ function thing(id) {
         </dl>
       </div>
       <div class="tag-actions">
-        <button type="button" class="btn done" data-done="${item.id}"${done ? ' disabled' : ''}>${ICON.check}Done today</button>
+        <button type="button" class="btn done" data-done="${item.id}"${done ? ' disabled' : ''}>${ICON.check}${done ? 'Logged today' : 'Done today'}</button>
         <button type="button" class="btn quiet" data-other="${item.id}">Another day…</button>
       </div></div>
     </article>
@@ -398,7 +398,7 @@ function form(id) {
         <div class="kind-every" ${rule.kind === 'every' ? '' : 'hidden'}>
           <div class="every-row"><span>Every</span>
             <input name="n" type="number" inputmode="numeric" min="1" max="999" value="${rule.kind === 'every' ? rule.n : 3}" aria-label="How many">
-            <select name="unit" aria-label="Days, weeks, months or years">${['day', 'week', 'month', 'year'].map(u => `<option value="${u}"${(rule.unit || 'month') === u ? ' selected' : ''}>${u}s</option>`).join('')}</select>
+            <select name="unit" aria-label="Days, weeks, months or years">${['day', 'week', 'month', 'year'].map(u => `<option value="${u}"${(rule.unit || 'month') === u ? ' selected' : ''}>${u}${(rule.kind === 'every' ? rule.n : 3) === 1 ? '' : 's'}</option>`).join('')}</select>
           </div>
           <p class="help">Counted from the last time you did it.</p>
         </div>
@@ -438,6 +438,8 @@ function form(id) {
 
   on({
     change(e) { if (['kind', 'area'].includes(e.target.name)) { sync(); if (e.target.value === '__new') f.newArea.focus(); } },
+    // "Every 1 year", "Every 2 years".
+    input(e) { if (e.target.name === 'n') for (const o of f.unit.options) o.textContent = o.value + (+e.target.value === 1 ? '' : 's'); },
     click(e) {
       if (e.target.closest('[data-act="delete"]')) removeWithUndo(item.id);
       if (e.target.closest('[data-act="leave-sample"]')) leaveSample();
@@ -682,12 +684,13 @@ function route() {
   if (path !== lastPath) { window.scrollTo(0, 0); lastPath = path; }
   ui.screen = head === 'thing' ? (b === 'edit' ? 'form' : 'thing') : head === 'add' ? 'form' : head === 'start' ? (a === 'when' ? 'when' : 'start') : head || 'home';
   document.body.dataset.screen = ui.screen;
-  if (head === 'thing' && b === 'edit') return form(a);
-  if (head === 'thing') return thing(a);
-  if (head === 'add') return form(null);
-  if (head === 'start') return a === 'when' ? when() : start();
-  if (head === 'settings') return settings();
-  home();
+  if (head === 'thing' && b === 'edit') form(a);
+  else if (head === 'thing') thing(a);
+  else if (head === 'add') form(null);
+  else if (head === 'start') { if (a === 'when') when(); else start(); }
+  else if (head === 'settings') settings();
+  else home();
+  badge();
 }
 
 // Redraws what's showing, except forms, which would lose what's being typed.
@@ -725,7 +728,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 setInterval(tick, 60000);
 window.addEventListener('hashchange', route);
 route();
-badge();
 
 if ('serviceWorker' in navigator && !single && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
