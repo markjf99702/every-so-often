@@ -61,6 +61,9 @@ export const store = {
 
   folded: g => !!device.fold[g],
   fold(g, v) { device.fold[g] = v; put(DEVICE, device); },
+  // How the main screen groups things on this device: 'due' or 'area'.
+  get view() { return device.view === 'area' ? 'area' : 'due'; },
+  set view(v) { device.view = v; put(DEVICE, device); },
 
   startSample() {
     device.sample = true;

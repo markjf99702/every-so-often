@@ -58,9 +58,9 @@ function tag({ item, s, last }, compact = false) {
   const done = doneToday(item);
   const body = `
       <div class="tag-top"><h3>${esc(item.name)}</h3>${dueMark(s)}</div>
-      ${compact ? '' : `<p class="meta">${area(item.area)} · ${esc(D.ruleText(item.rule))}</p>`}
+      ${compact ? '' : `<p class="meta"><span class="in-area">${area(item.area)} · </span>${esc(D.ruleText(item.rule))}</p>`}
       ${gauge(s)}
-      <p class="state">${esc(D.statusText(s, tn()))}${compact ? ` · ${area(item.area)}` : ` <span class="ago">· last done ${esc(D.ago(last, tn()))}</span>`}</p>
+      <p class="state">${esc(D.statusText(s, tn()))}${compact ? `<span class="in-area"> · ${area(item.area)}</span>` : ` <span class="ago">· last done ${esc(D.ago(last, tn()))}</span>`}</p>
       ${!compact && item.remember ? `<p class="remember"><b>Remember</b> ${esc(item.remember)}</p>` : ''}`;
   const actions = compact
     ? `<button type="button" class="tick" data-done="${item.id}" aria-label="Done today: ${esc(item.name)}"${done ? ' disabled' : ''}>${ICON.check}</button>`
@@ -109,13 +109,18 @@ function home() {
     ${areas.length > 1 ? `<nav class="areas" aria-label="Areas">
       <button type="button" class="chip" data-area="" aria-pressed="${!ui.area}">All <span>${all.length}</span></button>
       ${areas.map(a => `<button type="button" class="chip" data-area="${esc(a)}" aria-pressed="${ui.area === a}">${M.areaIcon(a)} ${esc(a)} <span>${all.filter(v => v.item.area === a).length}</span></button>`).join('')}
-    </nav>` : ''}
-    ${GROUPS.map(([k, label, test]) => {
+    </nav>
+    <div class="viewbar" role="group" aria-label="Group by">
+      <span>Group by</span>
+      <button type="button" data-view="due" aria-pressed="${store.view === 'due'}">When due</button>
+      <button type="button" data-view="area" aria-pressed="${store.view === 'area'}">Area</button>
+    </div>` : ''}
+    ${(store.view === 'area' && areas.length > 1 ? areas.map(a => [`area:${a}`, `${M.areaIcon(a)} ${esc(a)}`, v => v.item.area === a, 'area']) : GROUPS).map(([k, label, test, cls = k]) => {
       const list = shown.filter(test);
       if (!list.length) return '';
       const folded = store.folded(k);
-      return `<section class="group g-${k}">
-        <h2><button type="button" class="fold" data-fold="${k}" aria-expanded="${!folded}"><span class="tape">${label}</span><span class="n">${list.length}</span><span class="chev" aria-hidden="true"></span></button></h2>
+      return `<section class="group g-${cls}">
+        <h2><button type="button" class="fold" data-fold="${esc(k)}" aria-expanded="${!folded}"><span class="tape">${label}</span><span class="n">${list.length}</span><span class="chev" aria-hidden="true"></span></button></h2>
         ${folded ? '' : tagsHTML(list)}
       </section>`;
     }).join('')}
@@ -132,6 +137,7 @@ function home() {
       if (t.dataset.other) return anotherDay(t.dataset.other);
       if ('area' in t.dataset) { ui.area = t.dataset.area; return home(); }
       if (t.dataset.fold) { store.fold(t.dataset.fold, !store.folded(t.dataset.fold)); return home(); }
+      if (t.dataset.view) { store.view = t.dataset.view; return home(); }
       if (t.dataset.act === 'leave-sample') return leaveSample();
     },
   });

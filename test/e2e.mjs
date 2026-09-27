@@ -201,6 +201,13 @@ await page.click('.areas .chip:has-text("Pets")');
 assert.deepEqual(await page.locator('main .tag h3').allInnerTexts(), ['Flea and tick treatment']);
 await page.click('.areas .chip:has-text("All")');
 await fits(page, 'what’s due with areas');
+// Or grouped by area, which this device remembers.
+await page.click('[data-view="area"]');
+assert.deepEqual(await page.locator('.group .tape').allInnerTexts(), ['🏠 HOUSE', '🐾 PETS', '📦 KITCHEN']);
+await page.reload();
+await page.locator('.group.g-area').first().waitFor();
+await page.click('[data-view="due"]');
+assert.equal(await page.locator('.group.g-area').count(), 0);
 
 // Delete, and undo.
 await tag(page, 'Descale the kettle').locator('.tag-body').click();

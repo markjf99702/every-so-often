@@ -125,7 +125,7 @@ main { display: block; max-width: 760px; margin: 0 auto; padding: 4px max(16px, 
 body[data-screen="home"] main { max-width: 1060px; }
 
 /* ---------- headings and text ---------- */
-h1, h2, h3 { margin: 0; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
 .head { margin: 18px 0 14px; }
 .head h1, .page-h {
   font-weight: 800; font-stretch: 75%; font-size: 34px; line-height: 1.05; letter-spacing: .01em; text-transform: uppercase;
@@ -206,6 +206,13 @@ h1, h2, h3 { margin: 0; }
 .g-overdue { --band: var(--red); }
 .g-soon { --band: var(--amber); --band-on: #2a1e05; }
 .g-later { --band: var(--green); }
+.g-area { --band: var(--ink); --band-on: var(--card); }
+.g-area .tape { letter-spacing: .1em; }
+.g-area .in-area { display: none; }
+.viewbar { display: flex; align-items: center; gap: 4px; margin: -8px 0 14px; font-size: 13.5px; color: var(--muted); }
+.viewbar span { margin-right: 4px; font-weight: 600; }
+.viewbar button { min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--ink-2); font-weight: 650; font-size: 13.5px; cursor: pointer; }
+.viewbar button[aria-pressed="true"] { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink); }
 .tags { display: grid; gap: 12px; }
 .tags + .tags { margin-top: 12px; }
 .more { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 26px 0 0; }
