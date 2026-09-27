@@ -10,6 +10,7 @@ import { store, KEY } from './store.js';
 import { drive } from './sync.js';
 import { CATALOG, byKey } from './catalog.js';
 import { icsFor, googleLink, download } from './cal.js';
+import { sampleDoc } from './sample.js';
 import { app, esc, go, ICON, toast, sheet, sheetOpen, on, single } from './ui.js';
 
 const SITE = 'https://junkdrawer.works/every-so-often/';
@@ -725,4 +726,4 @@ if ('serviceWorker' in navigator && !single && location.protocol !== 'file:') {
 }
 
 // For the screenshot tool and tests: set things up without tapping through.
-window.everySoOften = { store, D, M };
+window.everySoOften = { store, D, M, sampleDoc };

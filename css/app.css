@@ -265,11 +265,11 @@ h1, h2, h3 { margin: 0; }
 /* The gauge: the fill grows towards the due line; the hatched zone before it is "due soon". */
 .gauge { position: relative; height: 12px; margin: 10px 0 7px; border-radius: 3px; background: var(--track); }
 .gauge .zone {
-  position: absolute; top: 0; bottom: 0; left: var(--z); right: 20%;
+  position: absolute; top: 0; bottom: 0; left: max(var(--z), var(--f)); right: 20%;
   background: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--amber) 45%, transparent) 3px 6px);
 }
 .gauge::after {
-  content: ''; position: absolute; top: 0; bottom: 0; left: 80%; right: 0; border-radius: 0 3px 3px 0;
+  content: ''; position: absolute; top: 0; bottom: 0; left: max(80%, var(--f)); right: 0; border-radius: 0 3px 3px 0;
   background: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--red) 30%, transparent) 3px 6px);
 }
 .gauge .fill {
