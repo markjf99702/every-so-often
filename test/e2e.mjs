@@ -28,6 +28,7 @@ const base = `http://localhost:${server.address().port}/`;
 const origin = base.slice(0, -1);
 
 const browser = await pw.chromium.launch();
+const started = Date.now();
 const problems = [];
 const GOOGLE = /^https:\/\/(accounts\.google\.com|www\.googleapis\.com)\//;
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -35,6 +36,9 @@ const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 async function device(opts = {}, { google = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, ...opts });
   if (google) await google.install(ctx, { rewrite: { '**/js/sync.js': s => s.replace("['https://junkdrawer.works']", `['https://junkdrawer.works', '${origin}']`) } });
+  // E2E_DATE=2028-02-29T09:00 runs it all on another day. Time still moves on from there, at the same
+  // offset for every device, so their clocks agree.
+  if (process.env.E2E_DATE) await ctx.clock.setSystemTime(new Date(Date.parse(process.env.E2E_DATE) + Date.now() - started));
   // Records the home-screen badge.
   await ctx.addInitScript(() => {
     window.__badge = [];
@@ -92,8 +96,7 @@ await page.waitForURL(/#\/start\/when$/);
 await page.selectOption('li[data-key="furnace-filter"] select', '91');
 await page.selectOption('li[data-key="flea-tick"] select', '0');
 await page.selectOption('li[data-key="gutters"] select', 'date');
-const gutterDay = await dayAgo(page, 200);
-await page.fill('li[data-key="gutters"] input[type=date]', gutterDay);
+await page.fill('li[data-key="gutters"] input[type=date]', await dayAgo(page, 0)); // today, so it's never overdue whatever the season
 await fits(page, 'when did you last');
 await page.click('text=Add 4 things');
 await page.waitForURL(/#\/$/);
