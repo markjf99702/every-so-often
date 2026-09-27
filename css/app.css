@@ -466,6 +466,11 @@ input[type=date] { -webkit-appearance: none; appearance: none; }
 
 .foot { color: var(--muted); font-size: 14px; margin: 20px 0 0; }
 .foot a { color: var(--ink-2); }
+/* Part of junkdrawer.works, under every screen */
+.jd-foot { padding: 0 16px calc(20px + env(safe-area-inset-bottom)); text-align: center; font-size: 14px; color: var(--ink-2); }
+.jd-foot a { text-decoration: none; }
+.jd-foot a:hover, .jd-foot a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.jd-foot span { margin: 0 6px; color: var(--muted); }
 .noscript { max-width: 560px; margin: 40px auto; padding: 0 16px; font-size: 18px; }
 
 /* ---------- toast and sheet ---------- */

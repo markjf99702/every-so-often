@@ -631,7 +631,7 @@ function settings() {
       <p id="eraseNote">${eraseNote()}</p>
       <div class="row"><button type="button" class="btn quiet danger" data-act="erase"${store.things().length || drive.isOn() ? '' : ' disabled'}>Erase</button></div>
     </section>`}
-    <p class="foot">Every So Often is part of <a href="https://junkdrawer.works/">junkdrawer.works</a>. No account, no tracking, and it works offline. <a href="https://junkdrawer.works/privacy.html">Privacy</a> · <a href="https://github.com/markjf99702/every-so-often">Source</a></p>`;
+    <p class="foot">No account, no tracking, and it works offline.</p>`;
   drive.card(document.getElementById('driveCard'));
   // The notes below say where the list is kept, so they follow Drive being turned on or off.
   drive.watch(() => {
