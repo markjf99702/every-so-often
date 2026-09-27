@@ -20,7 +20,8 @@ const server = createServer(async (req, res) => {
   try { body = await readFile(join(root, path === '/' ? 'index.html' : path)); } catch { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'text/html' });
   res.end(body);
-}).listen(0);
+});
+await new Promise(ok => server.listen(+process.env.PORT || 8114, ok));
 const base = `http://localhost:${server.address().port}/`;
 const NOW = new Date('2026-09-27T10:00:00');
 const browser = await pw.chromium.launch();

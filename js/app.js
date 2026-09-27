@@ -61,7 +61,7 @@ function tag({ item, s, last }, compact = false) {
       ${compact ? '' : `<p class="meta"><span class="in-area">${area(item.area)} · </span>${esc(D.ruleText(item.rule))}</p>`}
       ${gauge(s)}
       <p class="state">${esc(D.statusText(s, tn()))}${compact ? `<span class="in-area"> · ${area(item.area)}</span>` : ` <span class="ago">· last done ${esc(D.ago(last, tn()))}</span>`}</p>
-      ${!compact && item.remember ? `<p class="remember"><b>Remember</b> ${esc(item.remember)}</p>` : ''}`;
+      ${!compact && item.remember ? `<p class="remember"><span><b>Remember</b> ${esc(item.remember)}</span></p>` : ''}`;
   const actions = compact
     ? `<button type="button" class="tick" data-done="${item.id}" aria-label="Done today: ${esc(item.name)}"${done ? ' disabled' : ''}>${ICON.check}</button>`
     : `<div class="tag-actions">
