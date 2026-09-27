@@ -20,7 +20,7 @@
 
 ## How it works
 
-- **Each thing is a tag,** coloured like an inspection tag: red overdue, orange due now, amber due soon, green fine. The date it’s next due is written on a sticker in the corner, like the oil-change sticker on a windshield.
+- **Each thing is a tag,** colored like an inspection tag: red overdue, orange due now, amber due soon, green fine. The date it’s next due is written on a sticker in the corner, like the oil-change sticker on a windshield.
 - **The gauge** fills from the last time you did it towards the due line. The hatched stretch before the line is “due soon”; past the line is overdue. Due soon starts about a seventh of the interval before the due date (at least a day, at most three weeks), and two weeks before a season opens.
 - **One tap: Done today.** The tag gets a stamp and moves down the list, and Undo takes it back. **Another day…** logs yesterday, last week or any date, with an optional note like “16×25×1 MERV 8, $12”. Tap a tag for its history, where you can change or delete entries and see how often you’ve really been doing it.
 - **How often:** every so many days, weeks, months or years, counted from the last time you did it (a monthly job done on January 31 comes due on the last day of February). Or **by season**, done once in each season you pick (“each spring and fall”), for either hemisphere. Or **in set months** (“every April and October”). A seasonal job done up to three weeks before its season counts for it, and one done after its season counts for the season before.
