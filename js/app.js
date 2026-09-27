@@ -161,7 +161,7 @@ function hello() {
         <a class="btn big" href="#/add">${ICON.plus}Add your own</a>
         <button type="button" class="btn quiet" data-act="sample">Look around with sample data</button>
       </div>
-      <p class="small">Your list stays in this browser.${drive.ready ? ' You can also keep it in your own Google Drive, to have it on every device (see Settings).' : ''} No account, and it works offline.</p>
+      <p class="small">${drive.isOn() ? 'Your list is kept in this browser and saved to your Google Drive.' : `Your list stays in this browser.${drive.ready ? ' You can also keep it in your own Google Drive, to have it on every device (see Settings).' : ''}`} No account, and it works offline.</p>
     </section>`;
   on({ click(e) { if (e.target.closest('[data-act="sample"]')) { store.startSample(); render(); toast('Showing sample data'); } } });
 }
@@ -581,6 +581,18 @@ function when() {
 
 // ---------- settings ----------
 
+function backupNote() {
+  if (store.sample) return 'This is the sample list. Leave the sample to back up your own.';
+  if (drive.isOn()) return 'Your list is kept in this browser and saved to your Google Drive, so it’s on every device where you’ve turned Drive on. A backup file is an extra copy you keep yourself. Loading one merges it with what’s here, so nothing is lost.';
+  return `Your list is kept only in this browser. Save a backup file to keep a copy or to move it to another device${drive.ready ? ', or save to Google Drive above' : ''}. Loading one merges it with what’s here, so nothing is lost.`;
+}
+
+function eraseNote() {
+  return drive.isOn()
+    ? 'This removes your list from this browser and stops saving to Google Drive here. The copy in your Drive stays.'
+    : 'This removes your list from this browser. Save a backup first if you want to keep it.';
+}
+
 function settings() {
   document.title = 'Settings · Every So Often';
   const hemi = store.hemisphere;
@@ -604,7 +616,7 @@ function settings() {
     </section>
     <section class="card">
       <h2>Backup</h2>
-      <p>${store.sample ? 'This is the sample list. Leave the sample to back up your own.' : 'Your list is kept in this browser. Save a backup file to keep a copy or to move it to another device. Loading one merges it with what’s here, so nothing is lost.'}</p>
+      <p id="backupNote">${backupNote()}</p>
       <div class="row"><button type="button" class="btn" data-act="backup"${store.sample ? ' disabled' : ''}>Save a backup</button>
       <label class="btn file${store.sample ? ' off' : ''}">Load a backup<input type="file" id="loadBackup" accept=".json,application/json"${store.sample ? ' disabled' : ''}></label></div>
     </section>`}
@@ -616,11 +628,18 @@ function settings() {
     </section>
     ${store.sample ? '' : `<section class="card">
       <h2>Erase this device’s list</h2>
-      <p id="eraseNote">${drive.isOn() ? 'This removes your list from this browser and stops saving to Google Drive here. The copy in your Drive stays.' : 'This removes your list from this browser. Save a backup first if you want to keep it.'}</p>
+      <p id="eraseNote">${eraseNote()}</p>
       <div class="row"><button type="button" class="btn quiet danger" data-act="erase"${store.things().length || drive.isOn() ? '' : ' disabled'}>Erase</button></div>
     </section>`}
     <p class="foot">Every So Often is part of <a href="https://junkdrawer.works/">junkdrawer.works</a>. No account, no tracking, and it works offline. <a href="https://junkdrawer.works/privacy.html">Privacy</a> · <a href="https://github.com/markjf99702/every-so-often">Source</a></p>`;
   drive.card(document.getElementById('driveCard'));
+  // The notes below say where the list is kept, so they follow Drive being turned on or off.
+  drive.watch(() => {
+    const b = document.getElementById('backupNote'), e = document.getElementById('eraseNote');
+    if (!b?.isConnected && !e?.isConnected) return false;
+    if (b) b.textContent = backupNote();
+    if (e) e.textContent = eraseNote();
+  });
 
   let armed = false;
   on({

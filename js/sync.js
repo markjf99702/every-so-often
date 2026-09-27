@@ -264,6 +264,7 @@ export const drive = {
   isOn: () => !!CLIENT_ID && st.on,
   chip, card, changed, now, stop,
   onUpdate(f) { ups.push(f); }, // synced data landed in localStorage
+  watch(f) { if (CLIENT_ID) watch(f); }, // Drive turned on or off, or synced; return false to stop watching
 };
 
 if (CLIENT_ID) {
