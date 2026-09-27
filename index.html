@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Every So Often</title>
+  <meta name="description" content="Keep track of the jobs you do every few months and can never remember when you last did: the furnace filter, smoke alarm batteries, the dog’s flea pills, the tires. See what’s due, log it done with one tap, and keep the list on every device through your own Google Drive.">
+  <meta property="og:title" content="Every So Often">
+  <meta property="og:description" content="The jobs you do every few months, and when they’re next due.">
+  <meta property="og:image" content="https://junkdrawer.works/every-so-often/og.png">
+  <meta property="og:url" content="https://junkdrawer.works/every-so-often/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#e9e5dc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/permanent-marker.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="#/">
+      <img src="icon.svg" alt="" width="30" height="30">
+      <span>Every So Often</span>
+    </a>
+    <button type="button" class="icon-btn cloud" id="cloud" hidden></button>
+    <a class="icon-btn" href="#/add" aria-label="Add a thing" title="Add a thing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a>
+    <a class="icon-btn" href="#/settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></a>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <noscript><p class="noscript">Every So Often needs JavaScript to work out what’s due.</p></noscript>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog class="sheet" id="sheet" aria-label="Log it">
+    <form method="dialog" class="sheet-body"></form>
+  </dialog>
+</body>
+</html>

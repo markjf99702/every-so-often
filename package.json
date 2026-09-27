@@ -1,0 +1,15 @@
+{
+  "name": "every-so-often",
+  "private": true,
+  "type": "module",
+  "description": "The jobs you do every few months, and when they’re next due.",
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -p 8104 .",
+    "test": "node --test test/unit.test.mjs && node test/e2e.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "upng-js": "^2.1.0"
+  }
+}
