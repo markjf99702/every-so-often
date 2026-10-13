@@ -538,6 +538,19 @@ assert.equal(g.calls.length, callsBefore, 'no more Drive calls from it');
 assert.equal(driveFile().version, versionBefore);
 assert.equal(g.files().length, 2, 'still one folder and one file');
 
+// ---- a broken file in Drive ----
+// Cut short, say by a save that was cut off: it says the file isn't readable, rather than blaming the connection.
+{
+  const f = g.drive.files[driveFile().id], whole = f.body;
+  f.body = whole.slice(0, 40);
+  await L.goto(base + '#/settings');
+  await L.click('#driveCard [data-a="now"]');
+  await until(async () => await dot(L) === 'error', 'the red dot');
+  assert.match(await L.locator('#driveCard').innerText(), /The file in your Drive isn’t readable, so it was left alone/);
+  assert.equal(g.drive.files[driveFile().id].body, whole.slice(0, 40), 'and it was left alone');
+  f.body = whole;
+}
+
 // ---- erasing while a sync is under way ----
 // On a slow connection a sync can still be going when Erase is tapped, here or in another tab. What it read
 // before mustn't bring the list back.

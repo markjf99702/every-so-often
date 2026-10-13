@@ -61,7 +61,8 @@ async function folder() { // the "Every So Often" folder, made the first time (o
   return f ? f.id : (await api('POST', 'drive/v3/files?fields=id', JSON.stringify(FOLDER), 'application/json')).id;
 }
 async function download(id) {
-  const raw = await api('GET', `drive/v3/files/${id}?alt=media`);
+  // A file that isn't JSON at all (cut short, say) is unreadable too, not a connection problem.
+  const raw = await api('GET', `drive/v3/files/${id}?alt=media`).catch(e => { throw e instanceof SyntaxError ? { unreadable: true } : e; });
   if (!raw || raw.app !== 'every-so-often') throw { unreadable: true };
   return cleanDoc(raw);
 }
