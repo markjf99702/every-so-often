@@ -455,10 +455,11 @@ for (const pg of [L, P]) {
 
 // ---- both editing the same thing ----
 // The laptop logs the filter for last week and renames the gutters; the phone, later, logs the filter today
-// and renames the gutters too. Both entries keep, and the later name wins.
+// and renames the gutters too. Both entries keep, and the later name wins. (A second later: with E2E_DATE,
+// each device's clock is set as it starts, so they can be some tens of milliseconds apart.)
 await store(L, `const f = s.things().find(x => x.name === 'Change the furnace filter'); s.log(f.id, D.key(D.num(D.today()) - 7), 'Last week');
   const gu = s.things().find(x => x.name === 'Clean the gutters'); s.update(gu.id, { name: 'Clean the gutters and downspouts' });`);
-await wait(20);
+await wait(1000);
 await store(P, `const f = s.things().find(x => x.name === 'Change the furnace filter'); s.log(f.id, D.today(), 'Today');
   const gu = s.things().find(x => x.name === 'Clean the gutters'); s.update(gu.id, { name: 'Gutters' });`);
 // At the same time: one of them has to read, merge and try again. If both wrote at once, the one whose write
