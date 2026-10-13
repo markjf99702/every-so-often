@@ -27,6 +27,9 @@ const fresh = () => ({ on: false, email: '', name: '', last: 0, fileId: '' });
 
 let st = { ...fresh(), ...(get(KS) || {}) }, tok = get(KT);
 let status = 'off', note = '', busy = null, again = false, client = null, gisLoading = false, pushT = null;
+// Goes up whenever saving stops (Stop, Erase, or either in another tab), so a sync already under way then
+// leaves Drive and this device alone instead of putting back what it read before.
+let gen = 0;
 const ups = [], watchers = [];
 
 const saveSt = () => put(KS, st);
@@ -76,7 +79,7 @@ function whoami() {
 }
 
 // One sync: read the Drive copy, merge, write back what changed on either side.
-async function run(tries) {
+async function run(tries, g) {
   const local = readLocal(), localText = canon(local);
   try {
     const files = await findAll(FILE, 'id,version');
@@ -90,6 +93,7 @@ async function run(tries) {
     // the union: nothing on either side counts as removed.
     const first = !file || st.fileId !== file.id;
     const merged = remote ? mergeDocs(local, remote, { first }) : local, out = canon(merged);
+    if (g !== gen) return false; // saving stopped meanwhile
     if (!file) file = await create(out);
     else if (canon(remote) !== out || files.length > 1) {
       // Another device may have saved since we read it; then start over with its version.
@@ -102,13 +106,14 @@ async function run(tries) {
       const after = await api('GET', `drive/v3/files/${file.id}?fields=version`);
       if (String(after.version) !== String(wrote.version)) throw RETRY;
     }
+    if (g !== gen) return false;
     if (canon(readLocal()) !== localText) throw RETRY; // saved here meanwhile: merge again
     const changed = out !== localText;
     if (changed) { try { localStorage.setItem(KEY, out); } catch { /* keep what's on screen */ } }
     st.fileId = file.id; st.last = Date.now(); saveSt();
     return changed;
   } catch (e) {
-    if (e === RETRY && tries < 4) return run(tries + 1);
+    if (e === RETRY && tries < 4 && g === gen) return run(tries + 1, g);
     throw e;
   }
 }
@@ -118,11 +123,14 @@ function sync() {
   if (!live()) { setStatus('tap'); return Promise.resolve(false); }
   if (busy) { again = true; return busy; }
   setStatus('busy');
-  busy = run(0).then(changed => {
+  const g = gen;
+  busy = run(0, g).then(changed => {
+    if (g !== gen) return false;
     setStatus('ok');
     if (changed) ups.forEach(f => { try { f(); } catch (e) { console.error('Every So Often: showing synced changes failed', e); } });
     return changed;
   }, e => {
+    if (g !== gen) return false;
     if (e?.auth) setStatus('tap');
     else if (e?.unreadable) setStatus('error', 'The file in your Drive isn’t readable, so it was left alone. Save a backup here, then delete that file from the Every So Often folder to start it fresh.');
     else setStatus('error', e === RETRY ? 'Another device kept saving. Try again in a moment.' : 'Couldn’t reach Google Drive. Check the connection and try again.');
@@ -184,6 +192,7 @@ function signIn() {
 // revoking would cancel Google's permission for every project on this client.
 function stop() {
   clearTimeout(pushT);
+  gen++;
   st = fresh(); saveSt(); setStatus('off');
 }
 function now() { if (!st.on) start(); else if (!live()) signIn(); else sync(); } // inside a tap
@@ -278,6 +287,7 @@ if (CLIENT_ID) {
   window.addEventListener('storage', e => { // another tab signed in, stopped, or synced
     if (e.key === KS || e.key === KT) {
       st = { ...fresh(), ...(get(KS) || {}) }; tok = get(KT);
+      if (!st.on) gen++;
       setStatus(st.on ? (busy ? 'busy' : live() ? 'ok' : 'tap') : 'off');
       if (st.on) loadGis();
     }

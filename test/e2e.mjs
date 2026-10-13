@@ -489,6 +489,39 @@ assert.equal(g.calls.length, callsBefore, 'no more Drive calls from it');
 assert.equal(driveFile().version, versionBefore);
 assert.equal(g.files().length, 2, 'still one folder and one file');
 
+// ---- erasing while a sync is under way ----
+// On a slow connection a sync can still be going when Erase is tapped, here or in another tab. What it read
+// before mustn't bring the list back.
+let slow = 0, lastCall = 0;
+await tablet.ctx.route('https://www.googleapis.com/**', async route => { slow++; await wait(500); lastCall = Date.now(); slow--; await route.fallback(); });
+const inDrive = liveInDrive();
+async function eraseWhileSyncing(syncing) {
+  await T.goto(base + '#/settings');
+  await T.locator('[data-act="erase"]').waitFor();
+  await syncing.click('#cloud');
+  await until(async () => await dot(syncing) === 'busy', 'a sync to start');
+  await T.click('[data-act="erase"]');
+  await T.click('[data-act="erase"]');
+  await until(async () => /Erased this device’s list/.test(await T.locator('#toast').innerText()), 'the erase');
+  await until(() => slow === 0 && Date.now() - lastCall > 1500, 'the sync to wind down', 30000);
+  for (const pg of [T, syncing]) {
+    assert.deepEqual(await names(pg), [], 'still erased');
+    assert.equal(await pg.evaluate(() => localStorage.getItem('every-so-often')), null);
+  }
+  const s = await syncState(T);
+  assert.ok(!s.on && !s.fileId, 'and not saving to Drive');
+  assert.match(await text(T), /The jobs you do every few months/i);
+  assert.deepEqual(liveInDrive(), inDrive, 'the copy in Drive stays');
+}
+await eraseWhileSyncing(T);
+await turnOn(T);
+assert.deepEqual(await names(T), inDrive, 'turned back on, the list comes back from Drive');
+const T2 = await tablet.ctx.newPage();
+watch(T2, true);
+await T2.goto(base);
+await until(async () => await dot(T2) === 'ok', 'the second tab to sync');
+await eraseWhileSyncing(T2);
+
 // And the page never talked to Google away from junkdrawer.works (checked above, for the first phone).
 for (const c of [laptop, phone2, tablet]) await c.ctx.close();
 
