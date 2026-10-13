@@ -364,6 +364,17 @@ await page.keyboard.press('Enter');
 await until(async () => await page.getAttribute('[data-fold="later"]', 'aria-expanded') === 'false', 'the group to fold');
 assert.equal(await page.evaluate(() => document.activeElement.dataset.fold), 'later');
 await page.keyboard.press('Enter');
+
+// A long area name wraps on a narrow phone, rather than pushing the due sticker off the card.
+const loft = await store(page, `return s.add({ name: 'Sweep the loft', area: 'Garage loft above the workshop', rule: { kind: 'every', n: 3, unit: 'month' } })`);
+await page.setViewportSize({ width: 360, height: 780 });
+await page.goto(base + '#/thing/' + loft);
+await page.locator('.tag.big').waitFor();
+await fits(page, 'a thing with a long area name');
+{
+  const [card, sticker] = await Promise.all(['.tag.big .tag-main', '.tag.big .sticker'].map(s => page.locator(s).boundingBox()));
+  assert.ok(sticker.x + sticker.width <= card.x + card.width, 'the sticker stays on the card');
+}
 await still.ctx.close();
 
 // ================= Google Drive, through the stand-in =================

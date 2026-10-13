@@ -329,6 +329,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .tag.big .tag-body { padding: 14px 16px 6px 15px; }
 .tag.big h1 { font-weight: 800; font-stretch: 82%; font-size: 29px; line-height: 1.08; margin: 4px 0 2px; overflow-wrap: anywhere; }
 .tag.big .meta { margin: 0; }
+/* A long area name wraps beside the sticker rather than pushing it off the card. */
+.tag-top > div:not(.sticker) { min-width: 0; }
+.tag.big .meta .area { white-space: normal; overflow-wrap: anywhere; }
 .rule { margin: 2px 0 0; font-weight: 650; color: var(--ink-2); }
 .tag.big .sticker { min-width: 84px; }
 .tag.big .sticker .k { font-size: 10.5px; padding: 3px 8px 2px; }
