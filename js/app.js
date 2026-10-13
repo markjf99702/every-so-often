@@ -371,6 +371,9 @@ function form(id) {
   const item = id ? store.thing(id) : null;
   if (id && !item) return message('That thing isn’t here', 'It may have been deleted, here or on another device.');
   document.title = `${item ? 'Change' : 'Add'} · Every So Often`;
+  // Which screen the form was opened from, kept with its place in the history, for leaving it when it's done.
+  if (history.state == null) history.replaceState({ from: prevPath }, '');
+  let left = false;
   const rule = item?.rule || { kind: 'every', n: 3, unit: 'month' };
   const hemi = store.hemisphere;
   const areaList = allAreas();
@@ -448,6 +451,7 @@ function form(id) {
     },
     submit(e) {
       e.preventDefault();
+      if (left) return;
       const err = f.querySelector('#formErr');
       const fail = m => { err.textContent = m; err.hidden = false; };
       const name = f.name.value.trim();
@@ -464,17 +468,25 @@ function form(id) {
       const fields = { name, area: areaName, rule: D.cleanRule(r), remember: f.remember.value };
       if (item) {
         store.update(item.id, fields);
-        go(`/thing/${item.id}`);
+        left = true;
+        leave(`/thing/${item.id}`);
       } else {
         const last = f.last.value;
         if (last && (!D.isKey(last) || last > T)) return fail('Last done: pick today or a date before it.');
         const nid = store.add(fields);
         if (last) store.log(nid, last);
-        go('/', false);
+        left = true;
+        leave('/');
         toast(`Added “${name}”`);
       }
     },
   });
+}
+
+// A form that's done goes back to the screen it was opened from, so Back afterwards doesn't open it again;
+// opened from anywhere else, it gives its place in the history to the screen it goes to.
+function leave(path) {
+  if (history.state?.from === path.slice(1)) history.back(); else go(path, true);
 }
 
 // ---------- the starter list ----------
@@ -697,7 +709,7 @@ function message(title, text) {
 
 // ---------- routing ----------
 
-let lastPath = null;
+let lastPath = null, prevPath = null;
 function route() {
   T = D.today();
   const path = location.hash.replace(/^#\/?/, '');
@@ -708,7 +720,7 @@ function route() {
     if (sh.hasAttribute('open')) { if (sh.close) sh.close(); else sh.removeAttribute('open'); }
     // Keyboard focus, and a screen reader, start at the top of the new screen rather than nowhere.
     if (lastPath !== null) app.focus({ preventScroll: true });
-    window.scrollTo(0, 0); lastPath = path;
+    window.scrollTo(0, 0); prevPath = lastPath; lastPath = path;
   }
   ui.screen = head === 'thing' ? (b === 'edit' ? 'form' : 'thing') : head === 'add' ? 'form' : head === 'start' ? (a === 'when' ? 'when' : 'start') : head || 'home';
   document.body.dataset.screen = ui.screen;

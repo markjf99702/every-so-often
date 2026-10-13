@@ -160,6 +160,11 @@ await page.click('#thingForm button[type=submit]');
 await page.locator('.tag.big').waitFor();
 assert.match(await page.locator('.note-card').innerText(), /16×25×1 MERV 8/);
 assert.match(await page.locator('.tag.big .rule').innerText(), /Every 60 days/);
+// Once it's saved, the form is out of the way: Back goes to what's due, not to the form again.
+await page.goBack();
+await until(() => /#\/$/.test(page.url()), 'Back to go to what’s due');
+await page.goForward();
+await page.locator('.tag.big').waitFor();
 const due60 = await dayAgo(page, -60);
 assert.match(await page.locator('.facts').innerText(), new RegExp(await niceDay(page, due60)));
 const [ics] = await Promise.all([page.waitForEvent('download'), page.click('[data-act="ics"]')]);
@@ -202,6 +207,11 @@ await page.waitForURL(/#\/$/);
 await tag(page, 'Descale the kettle').waitFor();
 assert.match(await tag(page, 'Descale the kettle').innerText(), /Kitchen/);
 assert.equal(await store(page, 'return s.things().find(x => x.name === "Descale the kettle").rule.list.join()'), '1,7');
+// The same once it's added: Back goes to the thing the form was opened from.
+await page.goBack();
+await until(() => /#\/thing\/[^/]+$/.test(page.url()), 'Back to go to the thing before');
+await page.goForward();
+await tag(page, 'Descale the kettle').waitFor();
 
 // Areas filter the list.
 await page.click('.areas .chip:has-text("Pets")');
