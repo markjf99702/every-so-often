@@ -702,7 +702,12 @@ function route() {
   T = D.today();
   const path = location.hash.replace(/^#\/?/, '');
   const [head, a, b] = path.split('/');
-  if (path !== lastPath) { window.scrollTo(0, 0); lastPath = path; }
+  if (path !== lastPath) {
+    // A new screen (going back, say): the sheet, if it's open, was for the old one.
+    const sh = document.getElementById('sheet');
+    if (sh.hasAttribute('open')) { if (sh.close) sh.close(); else sh.removeAttribute('open'); }
+    window.scrollTo(0, 0); lastPath = path;
+  }
   ui.screen = head === 'thing' ? (b === 'edit' ? 'form' : 'thing') : head === 'add' ? 'form' : head === 'start' ? (a === 'when' ? 'when' : 'start') : head || 'home';
   document.body.dataset.screen = ui.screen;
   if (head === 'thing' && b === 'edit') form(a);

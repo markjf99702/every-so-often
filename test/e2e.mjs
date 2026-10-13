@@ -310,6 +310,19 @@ await group(page, 'overdue').waitFor();
   await until(async () => (await page.locator('.stamp').count()) === 0, 'the list to be redrawn');
   assert.match(await tag(page, 'Water the ferns').innerText(), /Due in 7 days/);
 }
+
+// The log sheet stays open while the same screen is redrawn (here, another tab saving), with what's typed in it,
+// but going back to another screen closes it.
+await tag(page, 'Feed the starter').locator('.tag-body').click();
+await page.locator('.tag.big').waitFor();
+await page.click('.tag.big [data-other]');
+await page.fill('#odNote', 'Half a cup of rye');
+await page.evaluate(() => window.dispatchEvent(new StorageEvent('storage', { key: 'every-so-often' })));
+assert.equal(await page.locator('#sheet').evaluate(d => d.open), true, 'a redraw leaves the sheet open');
+assert.equal(await page.inputValue('#odNote'), 'Half a cup of rye');
+await page.goBack();
+await group(page, 'overdue').waitFor();
+assert.equal(await page.locator('#sheet').evaluate(d => d.open), false, 'going back closes the sheet');
 await still.ctx.close();
 
 // ================= Google Drive, through the stand-in =================
