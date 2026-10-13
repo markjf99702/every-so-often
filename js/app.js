@@ -422,7 +422,7 @@ function form(id) {
 
       ${item ? '' : `<label class="field"><span>Last done <i>(optional)</i></span>
         <input name="last" type="date" max="${T}">
-        <p class="help">Leave it empty if you’re not sure, and it’ll show as due.</p></label>`}
+        <p class="help" id="lastHelp">${lastHelp(rule.kind)}</p></label>`}
 
       <p class="err" id="formErr" hidden></p>
       <div class="row">
@@ -436,6 +436,8 @@ function form(id) {
   const sync = () => {
     const kind = f.kind.value;
     for (const k of ['every', 'seasons', 'months']) f.querySelector('.kind-' + k).hidden = kind !== k;
+    const lh = f.querySelector('#lastHelp');
+    if (lh) lh.textContent = lastHelp(kind);
     const na = f.querySelector('.new-area');
     na.hidden = f.area.value !== '__new';
   };
@@ -482,6 +484,9 @@ function form(id) {
     },
   });
 }
+
+// With no last date a thing shows as due straight away, unless it goes by season or set months: then it waits for one.
+const lastHelp = kind => `Leave it empty if you’re not sure, and it’ll show as due${kind === 'seasons' ? ' in its season' : kind === 'months' ? ' in its month' : ''}.`;
 
 // A form that's done goes back to the screen it was opened from, so Back afterwards doesn't open it again;
 // opened from anywhere else, it gives its place in the history to the screen it goes to.
