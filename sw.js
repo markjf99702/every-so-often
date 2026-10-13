@@ -15,8 +15,9 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
+  // The other tools at junkdrawer.works share this address, and so these caches: clear out only this tool's old ones.
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('every-so-often-') && k !== CACHE).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
