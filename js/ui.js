@@ -27,7 +27,10 @@ export function toast(message, action) {
   const el = document.getElementById('toast');
   el.innerHTML = `<span>${esc(message)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
   el.hidden = false;
-  if (action) el.querySelector('button').onclick = () => { el.hidden = true; action.run(); };
+  // Its button can come up right where the one just tapped was (Log it, at the foot of the sheet), so for a
+  // moment it ignores taps: a quick second tap there mustn't undo what the first one did.
+  const shown = Date.now();
+  if (action) el.querySelector('button').onclick = () => { if (Date.now() - shown < 600) return; el.hidden = true; action.run(); };
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, action ? 7000 : 3000);
 }

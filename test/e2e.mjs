@@ -65,6 +65,8 @@ async function until(fn, what, ms = 10000) {
   while (Date.now() - t0 < ms) { if (await fn()) return; await wait(100); }
   throw new Error('timed out waiting for ' + what);
 }
+// Undo ignores taps for its first moment, so a second tap meant for Done today or Log it can't land on it.
+const undo = async page => { await page.locator('#toast button').waitFor(); await wait(700); await page.click('#toast button'); };
 const tag = (page, name) => page.locator('article.tag', { has: page.locator('h3', { hasText: name }) });
 const group = (page, k) => page.locator(`.group.g-${k}`);
 const dayAgo = (page, n) => page.evaluate(n => { const { D } = window.everySoOften; return D.key(D.num(D.today()) - n); }, n);
@@ -120,7 +122,7 @@ await page.locator('#toast button', { hasText: 'Undo' }).waitFor();
 assert.equal(await group(page, 'overdue').count(), 0, 'nothing overdue once it’s done');
 assert.match(await tag(page, 'Change the furnace filter').innerText(), /Due in 3 months/);
 assert.equal(await page.evaluate(() => window.__badge.at(-1)), dueNow - 1);
-await page.click('#toast button');
+await undo(page);
 assert.match(await group(page, 'overdue').innerText(), /Change the furnace filter/, 'undo puts it back');
 await tag(page, 'Change the furnace filter').locator('[data-done]').click();
 await page.locator('#toast button').waitFor();
@@ -133,8 +135,10 @@ await page.click('.sheet [data-ago="1"]');
 assert.equal(await page.inputValue('#odDay'), await dayAgo(page, 1));
 await page.fill('#odNote', 'All four beeped');
 await fits(page, 'the log sheet');
-await page.click('#odGo');
+// Log it, and a second tap straight after, which lands where the toast's Undo now is: Undo ignores it.
+await page.evaluate(() => { document.getElementById('odGo').click(); document.querySelector('#toast button').click(); });
 await page.locator('#sheet:not([open])').waitFor({ state: 'attached' });
+assert.equal(await page.locator('#toast').isVisible(), true, 'the toast is still up');
 assert.match(await group(page, 'later').innerText(), /Test smoke and CO alarms\s+Next due[\s\S]*Due in 4 weeks/i, 'done yesterday, so it’s a month away');
 await tag(page, 'Test smoke and CO alarms').locator('.tag-body').click();
 await page.waitForURL(/#\/thing\//);
@@ -178,7 +182,7 @@ await page.click('#odGo');
 await until(async () => /\$12, MERV 8/.test(await page.locator('.history').innerText()), 'the changed note');
 await page.locator('.log li').nth(1).locator('[data-del-entry]').click();
 assert.equal(await page.locator('.log li').count(), 2);
-await page.click('#toast button');
+await undo(page);
 assert.equal(await page.locator('.log li').count(), 3, 'undo brings the entry back');
 assert.match(await page.locator('.log li').nth(1).innerText(), /\$12, MERV 8/);
 
@@ -217,7 +221,7 @@ await tag(page, 'Descale the kettle').locator('.tag-body').click();
 await page.click('[data-act="delete"]');
 await page.waitForURL(/#\/$/);
 assert.equal(await tag(page, 'Descale the kettle').count(), 0);
-await page.click('#toast button');
+await undo(page);
 await tag(page, 'Descale the kettle').waitFor();
 
 // Another tab on the same device sees changes as they happen.
