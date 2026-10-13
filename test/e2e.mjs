@@ -75,6 +75,15 @@ const store = (page, fn, arg) => page.evaluate(([f, a]) => new Function('s', 'M'
 const names = page => store(page, 'return s.things().map(x => x.name).sort()');
 
 // ================= On one phone, no Drive =================
+// Without JavaScript it says what it needs, above the footer.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto(base);
+  const [msg, foot] = await Promise.all(['.noscript', '.jd-foot'].map(s => p.locator(s).boundingBox()));
+  assert.ok(msg.y + msg.height <= foot.y, 'the noscript line comes before the footer');
+  await ctx.close();
+}
 const phone = await device();
 let page = phone.page;
 await page.goto(base);
