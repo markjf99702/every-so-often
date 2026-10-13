@@ -135,9 +135,9 @@ function home() {
       if (!t) return;
       if (t.dataset.done) return markDone(t.dataset.done, t.closest('.tag'));
       if (t.dataset.other) return anotherDay(t.dataset.other);
-      if ('area' in t.dataset) { ui.area = t.dataset.area; return home(); }
-      if (t.dataset.fold) { store.fold(t.dataset.fold, !store.folded(t.dataset.fold)); return home(); }
-      if (t.dataset.view) { store.view = t.dataset.view; return home(); }
+      if ('area' in t.dataset) { ui.area = t.dataset.area; return render(); }
+      if (t.dataset.fold) { store.fold(t.dataset.fold, !store.folded(t.dataset.fold)); return render(); }
+      if (t.dataset.view) { store.view = t.dataset.view; return render(); }
       if (t.dataset.act === 'leave-sample') return leaveSample();
     },
   });
@@ -652,7 +652,7 @@ function settings() {
           try {
             const n = store.restoreBackup(text);
             toast(n ? `Loaded ${n} thing${n === 1 ? '' : 's'} from the backup` : 'Nothing new in that backup');
-            settings();
+            render();
           } catch (err) { toast(err.message); }
         });
       }
@@ -706,6 +706,8 @@ function route() {
     // A new screen (going back, say): the sheet, if it's open, was for the old one.
     const sh = document.getElementById('sheet');
     if (sh.hasAttribute('open')) { if (sh.close) sh.close(); else sh.removeAttribute('open'); }
+    // Keyboard focus, and a screen reader, start at the top of the new screen rather than nowhere.
+    if (lastPath !== null) app.focus({ preventScroll: true });
     window.scrollTo(0, 0); lastPath = path;
   }
   ui.screen = head === 'thing' ? (b === 'edit' ? 'form' : 'thing') : head === 'add' ? 'form' : head === 'start' ? (a === 'when' ? 'when' : 'start') : head || 'home';
@@ -719,13 +721,32 @@ function route() {
   badge();
 }
 
-// Redraws what's showing, except forms, which would lose what's being typed.
+// Redraws what's showing, except forms, which would lose what's being typed. Keyboard focus stays where it was.
 function render() {
   badge();
   if (['form', 'when'].includes(ui.screen)) return;
-  const y = window.scrollY;
+  const y = window.scrollY, path = lastPath, was = focusOf(document.activeElement);
   route();
   window.scrollTo(0, y);
+  if (was && lastPath === path) refocus(was);
+}
+
+// Where keyboard focus is, as places to look for it once the screen is redrawn: the same control, then the tag
+// of the thing it was for (Done today comes back disabled, and can't take focus), then its Another day button.
+function focusOf(el) {
+  if (!el || el === app || !app.contains(el)) return null;
+  const d = Object.keys(el.dataset)[0];
+  const attr = d ? 'data-' + d.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) : ['href', 'id', 'name'].find(a => el.hasAttribute(a));
+  const id = el.dataset.done || el.dataset.other || el.closest('[data-id]')?.dataset.id;
+  const self = attr && `${el.localName}[${attr}="${CSS.escape(el.getAttribute(attr))}"]${attr === 'name' && el.value ? `[value="${CSS.escape(el.value)}"]` : ''}`;
+  return [self, id && `a[href="#/thing/${id}"]`, id && `[data-other="${id}"]`].filter(Boolean);
+}
+function refocus(places) {
+  for (const sel of places) {
+    const el = app.querySelector(sel);
+    if (el) { el.focus({ preventScroll: true }); if (document.activeElement === el) return; }
+  }
+  app.focus({ preventScroll: true });
 }
 
 // While the installed app is open, its home-screen icon shows how many things are due.

@@ -323,6 +323,37 @@ assert.equal(await page.inputValue('#odNote'), 'Half a cup of rye');
 await page.goBack();
 await group(page, 'overdue').waitFor();
 assert.equal(await page.locator('#sheet').evaluate(d => d.open), false, 'going back closes the sheet');
+
+// ---- with the keyboard ----
+const focused = () => page.evaluate(() => { const a = document.activeElement; return a.id || a.closest('.tag')?.querySelector('h3')?.textContent || a.className; });
+// Done today: focus moves with the thing to its new place in the list, rather than off the page.
+await page.focus('.g-overdue [data-done]');
+assert.equal(await focused(), 'Feed the starter');
+await page.keyboard.press('Enter');
+await until(async () => await page.locator('.stamp').count() === 0 && await page.evaluate(() => document.activeElement.matches('a.tag-body')), 'focus on the tag just done');
+assert.equal(await focused(), 'Feed the starter');
+// The same after logging from the sheet.
+await page.focus('.g-overdue [data-other]');
+await page.keyboard.press('Enter');
+await page.locator('#odDay').waitFor();
+await page.focus('#odGo');
+await page.keyboard.press('Enter');
+await page.locator('#sheet:not([open])').waitFor({ state: 'attached' });
+await until(() => page.evaluate(() => document.activeElement.matches('a.tag-body')), 'focus back on the tag');
+assert.equal(await focused(), 'Descale the kettle');
+// A new screen starts at its top.
+await page.keyboard.press('Enter');
+await page.locator('.tag.big').waitFor();
+assert.equal(await focused(), 'app');
+await page.keyboard.press('Tab');
+assert.equal(await focused(), 'back');
+// Folding a group keeps focus on its button.
+await page.goBack();
+await page.focus('[data-fold="later"]');
+await page.keyboard.press('Enter');
+await until(async () => await page.getAttribute('[data-fold="later"]', 'aria-expanded') === 'false', 'the group to fold');
+assert.equal(await page.evaluate(() => document.activeElement.dataset.fold), 'later');
+await page.keyboard.press('Enter');
 await still.ctx.close();
 
 // ================= Google Drive, through the stand-in =================
