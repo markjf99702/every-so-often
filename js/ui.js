@@ -27,6 +27,10 @@ export function toast(message, action) {
   const el = document.getElementById('toast');
   el.innerHTML = `<span>${esc(message)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
   el.hidden = false;
+  // Clear of a bar along the foot of the screen (the starter list's Next), wherever that bar is just now.
+  el.style.removeProperty('--lift');
+  const bar = document.querySelector('.next-bar')?.getBoundingClientRect(), box = el.getBoundingClientRect();
+  if (bar && box.bottom + 12 > bar.top && box.top < bar.bottom) el.style.setProperty('--lift', `${Math.ceil(box.bottom + 12 - bar.top)}px`);
   // Its button can come up right where the one just tapped was (Log it, at the foot of the sheet), so for a
   // moment it ignores taps: a quick second tap there mustn't undo what the first one did.
   const shown = Date.now();

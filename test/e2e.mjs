@@ -88,6 +88,17 @@ await page.click('text=Pick from the starter list');
 await page.locator('.pick').first().waitFor();
 assert.ok(await page.locator('.pick').count() >= 60, 'the starter list');
 assert.match(await text(page), /typical ones, not rules/);
+// Next says to pick something first, clear of the bar it's in, whether the bar is at the foot of the screen
+// or, scrolled to the end, at the foot of the list.
+for (const end of [false, true]) {
+  await page.evaluate(end => scrollTo(0, end ? document.documentElement.scrollHeight : 0), end);
+  await page.click('#pickNext', { force: true });
+  await until(async () => /Tap at least one job first/.test(await page.locator('#toast').innerText()), 'the hint');
+  const [hint, bar] = await Promise.all(['#toast', '.next-bar'].map(s => page.locator(s).boundingBox()));
+  assert.ok(hint.y + hint.height <= bar.y || hint.y >= bar.y + bar.height, `the hint clears the Next bar${end ? ' at the end of the list' : ''}`);
+}
+assert.match(page.url(), /#\/start$/, 'and stays on the list');
+await page.evaluate(() => scrollTo(0, 0));
 for (const key of ['furnace-filter', 'test-alarms', 'gutters', 'flea-tick', 'oil-change']) await page.click(`.pick[data-key="${key}"]`);
 assert.equal(await page.locator('#pickCount').innerText(), '5 picked');
 await page.click('.pick[data-key="oil-change"]');
