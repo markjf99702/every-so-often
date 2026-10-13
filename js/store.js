@@ -13,7 +13,12 @@ function put(k, v) {
   try { localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)); return true; } catch { return false; }
 }
 
-let device = { sample: false, fold: {}, ...(get(DEVICE) || {}) };
+// This device's own settings, keeping only what's well formed, so junk left in storage can't stop the page.
+function readDevice() {
+  const d = get(DEVICE);
+  return { sample: !!d?.sample, view: d?.view, fold: d?.fold && typeof d.fold === 'object' && !Array.isArray(d.fold) ? d.fold : {} };
+}
+let device = readDevice();
 let doc = read();
 const listeners = [];
 
@@ -40,7 +45,7 @@ export const store = {
   onSave(f) { listeners.push(f); },
 
   // Picks up what another tab or a sync wrote.
-  reload() { device = { sample: false, fold: {}, ...(get(DEVICE) || {}) }; doc = read(); },
+  reload() { device = readDevice(); doc = read(); },
 
   add(fields) {
     const id = fields.id || M.newId();

@@ -496,6 +496,22 @@ test('the store saves to localStorage, keeps sample data apart, and merges backu
   delete globalThis.localStorage;
 });
 
+test('junk in this device’s own settings is ignored rather than stopping the page', async () => {
+  const mem = new Map();
+  globalThis.localStorage = { getItem: key => (mem.has(key) ? mem.get(key) : null), setItem: (key, v) => mem.set(key, String(v)), removeItem: key => mem.delete(key) };
+  const { store } = await import('../js/store.js');
+  for (const junk of ['{"fold":null}', '{"fold":"x"}', '{"fold":[]}', '{"fold":7,"view":3}', '7', '"abc"', '[]', 'null', '{']) {
+    mem.set('every-so-often.device', junk);
+    store.reload();
+    assert.equal(store.folded('overdue'), false, junk);
+    assert.equal(store.view, 'due', junk);
+    store.fold('overdue', true);
+    store.reload();
+    assert.equal(store.folded('overdue'), true, `${junk}: folding still works, and is remembered`);
+  }
+  delete globalThis.localStorage;
+});
+
 // ---------- the offline copy ----------
 
 test('the service worker keeps every file the page needs', async () => {
