@@ -352,6 +352,31 @@ test('a first sync takes the union: nothing is removed, and the same thing set u
   assert.ok(M.gone(M.mergeDocs(phone, drive).items.gone));
 });
 
+test('names in any script, or in emoji, only become one with the same name', () => {
+  const here = doc(
+    thing('h1', { name: '🐶💊', area: 'Pets', remember: 'Whole tablet', log: { a: { day: '2026-09-01', t: 5 } } }),
+    thing('h2', { name: '🐶 Flea pill', area: 'Pets' }),
+    thing('h3', { name: 'Κλάδεμα', area: 'Garden' }),
+    thing('h4', { name: 'Замена фильтра' }),
+    thing('h5', { name: '換気扇の掃除' }),
+    thing('h6', { name: 'Ölwechsel', area: 'Car' }),
+  );
+  const there = doc(
+    thing('t1', { name: '🐱💊', area: 'Pets', log: { b: { day: '2026-08-01', t: 5 } } }),
+    thing('t2', { name: '🐱 Flea pill', area: 'Pets' }),
+    thing('t3', { name: 'Πότισμα', area: 'Garden', rule: every(1, 'week') }),
+    thing('t4', { name: 'Проверить датчики дыма' }),
+    thing('t5', { name: '換気扇の掃除' }),
+    thing('t6', { name: 'ölwechsel', area: 'Car' }),
+  );
+  const m = M.mergeDocs(here, there, { first: true });
+  // The kitchen fan and the oil change were set up on both, so each becomes one; the rest are different things.
+  assert.deepEqual(M.live(m).map(x => x.name).sort(), ['Πότισμα', 'Κλάδεμα', 'Замена фильтра', 'Проверить датчики дыма', '換気扇の掃除', 'ölwechsel', '🐱 Flea pill', '🐱💊', '🐶 Flea pill', '🐶💊'].sort());
+  const dog = M.live(m).find(x => x.name === '🐶💊');
+  assert.equal(dog.remember, 'Whole tablet');
+  assert.deepEqual(M.entries(dog).map(e => e.day), ['2026-09-01'], 'the cat’s pill keeps its own history');
+});
+
 test('merging is order-free and repeatable, across many random edits', () => {
   let seed = 11;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;

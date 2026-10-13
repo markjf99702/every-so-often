@@ -131,7 +131,9 @@ function mergeItem(x, y) {
   return { ...details(base), id: x.id, log, ...(del ? { del } : {}) };
 }
 
-const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+// For telling whether two names are the same: case, spaces and punctuation don't count, but letters in any
+// script, digits and emoji do. A name of nothing but punctuation is compared as it is.
+const norm = s => String(s || '').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}\p{So}]+/gu, ' ').trim() || String(s || '').trim().toLowerCase();
 const sameThing = (a, b) => (a.key && b.key ? a.key === b.key : norm(a.name) === norm(b.name) && norm(a.area) === norm(b.area));
 
 // Merges two copies of the list. Order doesn't matter and merging again changes nothing, so every
