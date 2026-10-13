@@ -16,7 +16,7 @@
   <img src="docs/desktop-dark.png" alt="The same list on a laptop in dark mode, overdue tags two to a row" width="820">
 </p>
 
-<sub>Screenshots use the sample household: a made-up house, dog and car with a year and a half of history.</sub>
+<sub>Screenshots use the sample household: a made-up house, dog and car with a year of history.</sub>
 
 ## How it works
 

@@ -1,4 +1,4 @@
-// A made-up household with a year and a half of history, for looking around and for screenshots.
+// A made-up household with a year of history, for looking around and for screenshots.
 // Everything is placed relative to today, so it always has something overdue, something due soon
 // and plenty that's fine. It lives in its own storage and never syncs.
 import { key, num } from './due.js';
