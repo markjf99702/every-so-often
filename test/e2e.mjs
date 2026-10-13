@@ -279,6 +279,35 @@ await phone.ctx.setOffline(false);
 }
 await phone.ctx.close();
 
+// ================= Another phone, with Reduce Motion on =================
+const still = await device({ serviceWorkers: 'block', reducedMotion: 'reduce' });
+page = still.page;
+await page.goto(base);
+await store(page, `for (const [name, ago] of [['Water the ferns', 12], ['Feed the starter', 10], ['Descale the kettle', 9]])
+  s.log(s.add({ name, area: 'House', rule: { kind: 'every', n: 1, unit: 'week' } }), D.key(D.num(D.today()) - ago));`);
+await page.reload();
+await group(page, 'overdue').waitFor();
+
+// A double tap on Done today. The list holds still while the stamp shows, so the second tap lands on the same
+// button ("Already logged") and not on the next thing, which moves up into its place once the list is redrawn.
+{
+  const first = await page.evaluate(async () => {
+    const b = document.querySelector('.g-overdue [data-done]'), r = b.getBoundingClientRect();
+    const tap = () => document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    tap();
+    const stamped = !!document.querySelector('.stamp');
+    await new Promise(ok => setTimeout(ok, 120));
+    tap();
+    return { name: b.closest('.tag').querySelector('h3').textContent, stamped };
+  });
+  assert.equal(first.name, 'Water the ferns');
+  assert.ok(first.stamped, 'the stamp shows with Reduce Motion too, just without moving');
+  assert.deepEqual(await store(page, 'return s.things().filter(x => M.entries(x).some(e => e.day === D.today())).map(x => x.name)'), ['Water the ferns'], 'only the thing tapped is logged');
+  await until(async () => (await page.locator('.stamp').count()) === 0, 'the list to be redrawn');
+  assert.match(await tag(page, 'Water the ferns').innerText(), /Due in 7 days/);
+}
+await still.ctx.close();
+
 // ================= Google Drive, through the stand-in =================
 const g = fakeGoogle();
 const driveFile = () => g.files().find(f => f.appProperties?.everysooften === 'sync');

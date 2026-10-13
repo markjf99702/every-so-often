@@ -192,7 +192,9 @@ function markDone(id, tagEl) {
   const eid = store.log(id, T);
   const undo = { label: 'Undo', run: () => { store.unlog(id, eid); render(); } };
   const finish = () => { render(); toast(`${item.name}: done today`, undo); };
-  if (tagEl && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // The stamp holds the list still for a moment, with Reduce Motion on too (it just doesn't move then), so a
+  // quick second tap lands here ("Already logged") instead of on the next thing, which moves up into this place.
+  if (tagEl) {
     tagEl.insertAdjacentHTML('beforeend', `<span class="stamp" aria-hidden="true">Done ${esc(D.dayText(D.num(T)))}</span>`);
     tagEl.classList.add('stamped');
     setTimeout(finish, 650);
