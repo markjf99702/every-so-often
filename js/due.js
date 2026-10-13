@@ -131,6 +131,9 @@ export function status(rule, last, t, created = t, hemi = 'north') {
 
   const y = +key(t).slice(0, 4), lo = Math.min(t, created, last ?? t);
   const occ = occurrences(rule, hemi, +key(lo).slice(0, 4) - 1, y + 2);
+  // A last date in a later year (another device's clock, a typo) needs the windows around it too, and the next one.
+  const ly = last == null ? y : +key(last).slice(0, 4);
+  if (ly > y) occ.push(...occurrences(rule, hemi, Math.max(ly - 1, y + 3), ly + 2));
   const C = last == null ? null : creditOf(last, occ);
   const from = last ?? created;
   const gauge = (to, zone) => {

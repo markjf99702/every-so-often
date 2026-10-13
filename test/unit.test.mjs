@@ -117,6 +117,16 @@ test('a date in the future (another device’s clock, a typo) doesn’t break th
   const s = st(every(30, 'day'), '2026-10-05', '2026-09-27');
   assert.equal(s.state, 'later');
   assert.equal(s.frac, 0);
+  // Nor a seasonal or set-months job, however far ahead the date is.
+  const cases = [[seasons('spring', 'fall'), '2029-03-05'], [seasons('winter'), '2029-01-10'], [months(4, 10), '2028-09-10'], [months(1), '2027-12-20'], [seasons('fall'), '9999-12-31']];
+  for (const [rule, last] of cases) {
+    const f = st(rule, last, '2026-10-13');
+    assert.equal(f.state, 'later', `${D.ruleText(rule)}, last done ${last}`);
+    assert.ok(f.due > n(last) && f.frac === 0, `${D.ruleText(rule)}, last done ${last}`);
+  }
+  const gutters = st(seasons('spring', 'fall'), '2029-03-05', '2026-10-13');
+  assert.equal(k(gutters.due), '2029-09-01', 'done in spring 2029, so next due in the fall after');
+  assert.equal(D.statusText(gutters), 'Next: fall, from Sep 1');
 });
 
 // ---------- seasons and months ----------
