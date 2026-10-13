@@ -420,6 +420,8 @@ test('the hemisphere comes from the setting, or a guess from the time zone', () 
   assert.equal(M.hemisphere(M.blankDoc(), 'Australia/Sydney'), 'south');
   assert.equal(M.hemisphere(M.blankDoc(), 'America/Argentina/Buenos_Aires'), 'south');
   assert.equal(M.hemisphere(M.blankDoc(), 'America/Chicago'), 'north');
+  for (const zone of ['America/Punta_Arenas', 'America/Campo_Grande', 'America/Cuiaba', 'Pacific/Easter', 'Pacific/Norfolk', 'Pacific/Rarotonga', 'Pacific/Tahiti', 'Atlantic/Stanley']) assert.equal(M.hemisphere(M.blankDoc(), zone), 'south', zone);
+  for (const zone of ['Europe/London', 'Asia/Tokyo', 'Pacific/Honolulu', 'Atlantic/Reykjavik', 'America/Mexico_City']) assert.equal(M.hemisphere(M.blankDoc(), zone), 'north', zone);
   assert.equal(M.hemisphere(M.setPref(M.blankDoc(), 'hemisphere', 'south'), 'America/Chicago'), 'south');
 });
 

@@ -220,7 +220,7 @@ export function setPref(doc, k, v) {
 }
 
 // Where the seasons fall: the saved choice, or a guess from the time zone.
-const SOUTH = /^(Australia|Antarctica)\/|^Pacific\/(Auckland|Chatham|Fiji|Tongatapu|Apia|Noumea|Efate)|^America\/(Argentina|Santiago|Montevideo|Asuncion|Sao_Paulo|La_Paz|Lima)|^Africa\/(Johannesburg|Maputo|Harare|Lusaka|Windhoek|Gaborone|Maseru|Mbabane|Blantyre|Lubumbashi)|^Indian\/(Mauritius|Reunion|Antananarivo)/;
+const SOUTH = /^(Australia|Antarctica)\/|^Pacific\/(Auckland|Chatham|Fiji|Tongatapu|Apia|Noumea|Efate|Easter|Norfolk|Rarotonga|Tahiti)|^America\/(Argentina|Santiago|Punta_Arenas|Montevideo|Asuncion|Sao_Paulo|Campo_Grande|Cuiaba|La_Paz|Lima)|^Atlantic\/Stanley|^Africa\/(Johannesburg|Maputo|Harare|Lusaka|Windhoek|Gaborone|Maseru|Mbabane|Blantyre|Lubumbashi)|^Indian\/(Mauritius|Reunion|Antananarivo)/;
 export function hemisphere(doc, zone = safeZone()) {
   return doc.prefs.hemisphere?.v || (SOUTH.test(zone) ? 'south' : 'north');
 }
