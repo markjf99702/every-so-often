@@ -207,7 +207,7 @@ function anotherDay(id, entry) {
   const t = tn(), was = entry ? item.log[entry] : null;
   const quick = [[0, 'Today'], [1, 'Yesterday'], [7, 'A week ago']];
   sheet(`
-    <h2>${entry ? 'Change this entry' : 'Log it'}</h2>
+    <h2 id="sheetTitle">${entry ? 'Change this entry' : 'Log it'}</h2>
     <p class="sub">${esc(item.name)}</p>
     <div class="quick" role="group" aria-label="When">${quick.map(([d, l]) => `<button type="button" class="chip" data-ago="${d}">${l}</button>`).join('')}</div>
     <label class="field"><span>Date</span><input type="date" id="odDay" max="${T}" value="${was ? was.day : T}" required></label>

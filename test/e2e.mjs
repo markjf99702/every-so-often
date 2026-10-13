@@ -175,12 +175,14 @@ assert.ok(icsText.replace(/\r\n /g, '').includes('Remember: 16×25×1 MERV 8'));
 assert.ok((await page.getAttribute('a:has-text("Google Calendar")', 'href')).includes(`dates=${due60.replace(/-/g, '')}%2F`));
 // Another entry, then change it, delete it and undo that.
 await page.click('.tag.big [data-other]');
+assert.equal(await page.getByRole('dialog', { name: /^log it$/i }).count(), 1, 'the sheet is named for what it does');
 await page.fill('#odDay', await dayAgo(page, 64));
 await page.fill('#odNote', '$12 at the hardware store');
 await page.click('#odGo');
 await until(async () => (await page.locator('.log li').count()) === 3, 'three entries: the starter-list guess, last month and today');
 assert.match(await page.locator('.history .hint').innerText(), /On average every 7 weeks, against every 60 days/);
 await page.locator('.log li').nth(1).locator('[data-edit-entry]').click();
+assert.equal(await page.getByRole('dialog', { name: /^change this entry$/i }).count(), 1, 'the sheet is named for what it does');
 assert.equal(await page.inputValue('#odNote'), '$12 at the hardware store');
 await page.fill('#odNote', '$12, MERV 8');
 await page.click('#odGo');
