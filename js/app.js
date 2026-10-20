@@ -630,7 +630,7 @@ function settings() {
     </section>
     ${single ? '' : `<section class="card">
       <h2>Calendar</h2>
-      <p>One calendar file with the next due date of everything on your list, for Apple Calendar, Outlook or Google Calendar. Import it again after a while to add the newer dates; it updates the events it added before.</p>
+      <p>One calendar file with the next due date of everything on your list, for Apple Calendar, Outlook or Google Calendar. Import it again after a while to add the newer dates; you can delete the old ones.</p>
       <div class="row"><button type="button" class="btn" data-act="ics-all"${store.things().length ? '' : ' disabled'}>${ICON.cal}Calendar file (.ics)</button></div>
     </section>
     <section class="card">
