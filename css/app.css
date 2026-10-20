@@ -40,6 +40,8 @@
   --orange-ink: #a4520e;
   --amber-ink: #85600a;
   --green-ink: #2f6a3b;
+  --red-on: #fff; /* the labels on red and green tags and groups */
+  --green-on: #fff;
   --focus: #2b6cb0;
   --shadow: rgba(50, 35, 15, .13);
   color-scheme: light;
@@ -69,6 +71,8 @@
     --orange-ink: #f0a46a;
     --amber-ink: #efc66f;
     --green-ink: #8fcb9b;
+    --red-on: #16171a; /* the red and green are lighter here, so the labels on them are dark */
+    --green-on: #16171a;
     --focus: #7fb2ea;
     --shadow: rgba(0, 0, 0, .45);
     color-scheme: dark;
@@ -203,9 +207,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .fold .n { font-weight: 700; color: var(--muted); font-size: 15px; }
 .fold .chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
 .fold[aria-expanded="false"] .chev { transform: rotate(-45deg); }
-.g-overdue { --band: var(--red); --band-on: #fff; }
+.g-overdue { --band: var(--red); --band-on: var(--red-on); }
 .g-soon { --band: var(--amber); --band-on: #2a1e05; }
-.g-later { --band: var(--green); --band-on: #fff; }
+.g-later { --band: var(--green); --band-on: var(--green-on); }
 .g-area { --band: var(--ink); --band-on: var(--card); }
 .g-area .tape { letter-spacing: .1em; }
 .g-area .in-area { display: none; }
@@ -223,14 +227,10 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
   filter: drop-shadow(0 1px 1px var(--shadow)) drop-shadow(0 4px 8px color-mix(in srgb, var(--shadow) 55%, transparent));
 }
 /* Each state sets its own label colour (--band-on), so a tag's sticker reads the same in any group. */
-.s-overdue { --band: var(--red); --band-ink: var(--red-ink); --band-on: #fff; }
+.s-overdue { --band: var(--red); --band-ink: var(--red-ink); --band-on: var(--red-on); }
 .s-due { --band: var(--orange); --band-ink: var(--orange-ink); --band-on: #2a1e05; }
 .s-soon { --band: var(--amber); --band-ink: var(--amber-ink); --band-on: #2a1e05; }
-.s-later { --band: var(--green); --band-ink: var(--green-ink); --band-on: #fff; }
-/* The red and green are lighter in the dark, so the labels on them are dark there. */
-@media (prefers-color-scheme: dark) {
-  .g-overdue, .s-overdue, .g-later, .s-later { --band-on: #16171a; }
-}
+.s-later { --band: var(--green); --band-ink: var(--green-ink); --band-on: var(--green-on); }
 .tag-end {
   flex: none; width: 34px; display: grid; place-items: center;
   background: var(--band);

@@ -566,3 +566,13 @@ test('the service worker keeps every file the page needs', async () => {
   const html = await readFile(new URL('index.html', root), 'utf8');
   for (const [, f] of html.matchAll(/(?:href|src)="((?!https?:|#)[^"]+)"/g)) assert.ok(shell.has(f), `index.html uses ${f}, which sw.js doesn’t keep`);
 });
+
+// ---------- the single-file copy ----------
+
+test('every dark colour is in the dark palette, so the single-file copy follows its host’s light or dark switch', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const css = await readFile(new URL('../css/app.css', import.meta.url), 'utf8');
+  // scripts/build.mjs copies this one block for the host's data-theme; a dark rule anywhere else wouldn't follow it.
+  assert.match(css, /@media \(prefers-color-scheme: dark\) \{\n  :root \{([^}]*)\}\n\}/, 'the dark palette, as scripts/build.mjs finds it');
+  assert.equal(css.split('prefers-color-scheme: dark').length - 1, 1, 'no other dark-mode rule');
+});
