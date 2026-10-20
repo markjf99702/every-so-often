@@ -98,7 +98,7 @@ export const store = {
       const was = doc.items[id];
       if (was && M.gone(was) && !M.gone(x)) merged.items[id] = { ...x, t: Math.max(M.stamp(x), was.del + 1) };
     }
-    const changed =Object.keys(merged.items).filter(id => M.canon(merged.items[id]) !== M.canon(doc.items[id]) && !M.gone(merged.items[id])).length;
+    const changed = Object.keys(merged.items).filter(id => M.canon(merged.items[id]) !== M.canon(doc.items[id]) && !M.gone(merged.items[id])).length;
     write(merged);
     return changed;
   },
