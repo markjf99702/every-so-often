@@ -34,7 +34,7 @@
 
 ## Saving to Google Drive
 
-Optional, and only at junkdrawer.works. **Settings → Save to Google Drive** signs in with Google and keeps the list in one file, `Every So Often.json`, in an `Every So Often` folder at the top of your Drive. Every device where you turn it on merges into that file. It asks Google for `drive.file`, so it can see only the files it made. The sign-in is the one the junkdrawer.works tools share: if you signed in to From Scratch with the same Google account in the last hour, it doesn’t ask again. A sign-in for another account isn’t used, so on a shared computer someone else signing in to another project doesn’t send your list to their Drive.
+Optional, and only at junkdrawer.works. **Settings → Save to Google Drive** signs in with Google and keeps the list in one file, `Every So Often.json`, in an `Every So Often` folder at the top of your Drive. Every device where you turn it on merges into that file. It asks Google for `drive.file`, so it can see only the files it made. The sign-in is the one the junkdrawer.works tools share: if you signed in to From Scratch in the last hour, turning it on here doesn’t ask again, and Settings shows which account it went with. After that it only uses a sign-in for that account, so on a shared computer someone else signing in to another project doesn’t send your list to their Drive.
 
 - **What syncs:** your things (name, area, how often, what to remember), every log entry and its note, deletions, and the hemisphere setting.
 - **What stays on each device:** whether this device saves to Drive, the Google sign-in (good for an hour at a time), how the main screen is grouped and which groups are folded, and the sample data.
