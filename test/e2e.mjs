@@ -1,10 +1,10 @@
 // Uses the app in Chromium through the real page:  node test/e2e.mjs  (needs Playwright)
-// Someone sets up their list from the starter list, logs jobs done, keeps notes, adds to a calendar and backs
-// it up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. The labels on tags and
-// groups are checked for contrast, light and dark, in every view. Then three devices save
-// through a stand-in Google Drive (test/fake-google.mjs): turning it on, a second device joining, edits on both,
-// a deletion, a backup bringing it back, an expired sign-in, a sign-in from another project, one for another
-// Google account, stopping, a broken file, and erasing mid-sync.
+// Someone sets up their list from the starter list, logs jobs done, keeps notes, adds to a calendar and backs it
+// up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. Jobs last done two years or
+// more ago get the right dates and stickers, and the labels on tags and groups are checked for contrast, light and
+// dark, in every view. Then three devices save through a stand-in Google Drive (test/fake-google.mjs): turning it
+// on, a second device joining, edits on both, a deletion, a backup bringing it back, an expired sign-in, a sign-in
+// from another project, one for another Google account, stopping, a broken file, and erasing mid-sync.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
