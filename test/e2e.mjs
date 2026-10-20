@@ -3,8 +3,8 @@
 // it up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. The labels on tags and
 // groups are checked for contrast, light and dark, in every view. Then three devices save
 // through a stand-in Google Drive (test/fake-google.mjs): turning it on, a second device joining, edits on both,
-// a deletion, a backup bringing it back, an expired sign-in, a sign-in from another project, stopping, a broken
-// file, and erasing mid-sync.
+// a deletion, a backup bringing it back, an expired sign-in, a sign-in from another project, one for another
+// Google account, stopping, a broken file, and erasing mid-sync.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -657,6 +657,44 @@ await L.click('#cloud');
 await until(async () => await dot(L) === 'ok' && driveFile().version > beforeTap, 'signing back in to sync');
 assert.deepEqual(await L.evaluate(() => window.__prompts.at(-1)), { prompt: '', login_hint: 'mark@gmail.com' }, 'straight back in, no account chooser');
 assert.ok(Object.values(Object.values(driveDoc().items).find(x => x.name === 'Trim nails').log).some(e => e.note === 'While signed out'));
+
+// ---- a sign-in for another Google account ----
+// Someone else on this computer signs in to another junkdrawer.works project with their own account. This device
+// saves to mark@gmail.com, so it never uses their sign-in, and nothing goes to their Drive.
+const anasDrive = () => g.files().filter(f => f.owner === 'ana');
+const nailsLog = () => Object.values(Object.values(driveDoc().items).find(x => x.name === 'Trim nails').log);
+{
+  const other = await laptop.ctx.newPage(); // a tab with the other project in it
+  watch(other, true);
+  await other.goto(base + 'icon.svg');
+  await other.evaluate(() => localStorage.setItem('junkdrawer.google', JSON.stringify({ token: 'tok-ana', exp: Date.now() + 50 * 60000, scope: 'https://www.googleapis.com/auth/drive.file', email: 'ana@gmail.com' })));
+  await other.close();
+}
+// The page that's open carries on with its own sign-in.
+await store(L, `const n = s.things().find(x => x.name === 'Trim nails'); s.update(n.id, { remember: 'Just the tips, and the dew claws' });`);
+await until(() => Object.values(driveDoc().items).some(x => x.remember === 'Just the tips, and the dew claws'), 'the change to reach this device’s Drive');
+assert.equal(await dot(L), 'ok');
+// Opened again, with only their sign-in here, it asks for its own.
+await L.reload();
+await until(async () => await dot(L) === 'tap', 'the red dot');
+await store(L, `const n = s.things().find(x => x.name === 'Trim nails'); s.log(n.id, D.today(), 'While someone else was signed in');`);
+await wait(1800);
+// In Google's window they pick their own account, whatever it suggested: that's refused, and the page says why.
+await L.evaluate(() => localStorage.setItem('__who', 'ana'));
+await L.waitForFunction(() => !!window.google);
+await L.click('#cloud');
+await until(async () => await dot(L) === 'error', 'the refusal');
+assert.deepEqual(await L.evaluate(() => window.__prompts.at(-1)), { prompt: '', login_hint: 'mark@gmail.com' }, 'Google was asked for this device’s account');
+await L.goto(base + '#/settings');
+assert.match(await L.locator('#driveCard').innerText(), /You signed in as ana@gmail\.com, but this device saves to mark@gmail\.com, so nothing went to that Drive\. Sign in as mark@gmail\.com/);
+assert.equal(await L.evaluate(() => JSON.parse(localStorage.getItem('junkdrawer.google')).email), 'ana@gmail.com', 'their sign-in isn’t passed off as this account’s');
+assert.ok(!nailsLog().some(e => e.note === 'While someone else was signed in'));
+// Signed in as this device's account, what was saved meanwhile goes to its Drive.
+await L.evaluate(() => localStorage.removeItem('__who'));
+await L.click('#driveCard [data-a="now"]');
+await until(async () => await dot(L) === 'ok' && nailsLog().some(e => e.note === 'While someone else was signed in'), 'signing in as mark@gmail.com to sync');
+assert.equal(await L.evaluate(() => JSON.parse(localStorage.getItem('junkdrawer.google')).token), 'tok-mark');
+assert.deepEqual(anasDrive(), [], 'nothing ever went to their Drive');
 
 // ---- a sign-in reused from another junkdrawer.works project ----
 const tablet = await drive({ viewport: { width: 800, height: 1100 }, deviceScaleFactor: 1 });

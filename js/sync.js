@@ -34,17 +34,23 @@ const ups = [], watchers = [];
 
 const saveSt = () => put(KS, st);
 const good = t => !!(t && t.token && t.exp - 60000 > Date.now() && String(t.scope || '').includes(SCOPE));
-// A sign-in with more than a minute left: this page's, or a newer one another junkdrawer.works project saved.
-const live = () => good(tok) || (good(get(KT)) && !!(tok = get(KT)));
+// The same Google account. A sign-in that doesn't say whose it is isn't taken to be anyone's.
+const sameAccount = (a, b) => !!a && String(a).toLowerCase() === String(b).toLowerCase();
+// A sign-in this device can use: more than a minute left, and for the Google account this device saves to. On a
+// shared computer the newest sign-in may be someone else's, made in another junkdrawer.works project, and this list
+// doesn't go to their Drive. (Until this device knows its account, when Drive is first turned on, any will do.)
+const usable = t => good(t) && (!st.email || sameAccount(t.email, st.email));
+// This page's sign-in, or a newer one another junkdrawer.works project saved, if it's usable.
+const live = () => usable(tok) || (usable(get(KT)) && !!(tok = get(KT)));
 function setStatus(s, n = '') { status = s; note = n; for (const f of [...watchers]) { try { if (f() === false) watchers.splice(watchers.indexOf(f), 1); } catch { watchers.splice(watchers.indexOf(f), 1); } } }
 
-async function api(method, path, body, type) {
-  if (!tok) throw { auth: true };
-  const headers = { Authorization: 'Bearer ' + tok.token };
+async function api(method, path, body, type, t = tok) {
+  if (!t) throw { auth: true };
+  const headers = { Authorization: 'Bearer ' + t.token };
   if (type) headers['Content-Type'] = type;
   const r = await fetch(API + path, { method, headers, body });
   // Google refused the sign-in: forget it here, and for the other projects unless one has a newer one already.
-  if (r.status === 401) { if (get(KT)?.token === tok.token) put(KT, null); tok = null; throw { auth: true }; }
+  if (r.status === 401) { if (get(KT)?.token === t.token) put(KT, null); if (tok?.token === t.token) tok = null; throw { auth: true }; }
   if (!r.ok) throw { http: r.status };
   return r.status === 204 ? null : r.json();
 }
@@ -72,17 +78,27 @@ async function create(body) {
     `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ ...FILE, parents: [dir] })}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`,
     `multipart/related; boundary=${b}`);
 }
-function whoami() {
-  return api('GET', 'drive/v3/about?fields=' + encodeURIComponent('user(displayName,emailAddress)')).then(x => {
-    st.email = x?.user?.emailAddress || ''; st.name = x?.user?.displayName || ''; saveSt();
-    if (tok) { tok.email = st.email; put(KT, tok); } // so the next junkdrawer.works project can skip the account chooser
-  }, () => {});
+// Whose a sign-in is, from Google itself. The email kept with a sign-in only says whose it was meant to be.
+function account(t) {
+  return api('GET', 'drive/v3/about?fields=' + encodeURIComponent('user(displayName,emailAddress)'), null, null, t)
+    .then(x => ({ email: x?.user?.emailAddress || '', name: x?.user?.displayName || '' }));
+}
+// Before the first sync with a sign-in that didn't say whose it is: the account this device saves to from now on.
+async function learnAccount(g) {
+  const t = tok, who = await account(t);
+  if (!who.email) throw { http: 0 };
+  if (g !== gen) return;
+  st.email = who.email; st.name = who.name; saveSt();
+  t.email = who.email; // and for the next junkdrawer.works project, so it can skip the account chooser
+  if (get(KT)?.token === t.token) put(KT, t);
 }
 
 // One sync: read the Drive copy, merge, write back what changed on either side.
 async function run(tries, g) {
   const local = readLocal(), localText = canon(local);
   try {
+    if (!st.email) await learnAccount(g);
+    if (g !== gen) return false; // saving stopped meanwhile
     const files = await findAll(FILE, 'id,version');
     let file = files[0] || null, remote = file ? await download(file.id) : null;
     // Two devices that each made the file at the same moment: fold the extras into the first and bin them.
@@ -169,10 +185,24 @@ function gotToken(r) {
     setStatus(st.on ? 'tap' : 'off', 'Google Drive wasn’t allowed, so nothing was saved there. Try again and leave the Drive box ticked.');
     return;
   }
-  tok = { token: r.access_token, exp: Date.now() + (+r.expires_in || 3600) * 1000, scope: r.scope || SCOPE, email: st.email || tok?.email || '' };
-  put(KT, tok);
-  st.on = true; saveSt();
-  (st.email ? Promise.resolve() : whoami()).then(sync);
+  const t = { token: r.access_token, exp: Date.now() + (+r.expires_in || 3600) * 1000, scope: r.scope || SCOPE, email: '' }, g = gen;
+  setStatus('busy');
+  // Google's window lets someone pick any account, whatever login_hint asked for, so ask Google whose this is
+  // before using it, or telling the other junkdrawer.works projects whose it is.
+  account(t).then(who => {
+    if (g !== gen) return; // saving stopped meanwhile
+    if (!who.email) throw { http: 0 };
+    if (st.email && !sameAccount(who.email, st.email)) {
+      setStatus('error', `You signed in as ${who.email}, but this device saves to ${st.email}, so nothing went to that Drive. Sign in as ${st.email}, or stop saving on this device to change accounts.`);
+      return;
+    }
+    tok = { ...t, email: who.email };
+    put(KT, tok);
+    st.on = true; if (!st.email) { st.email = who.email; st.name = who.name; } saveSt();
+    sync();
+  }).catch(e => {
+    if (g === gen) setStatus(st.on ? 'error' : 'off', e?.auth ? 'Google sign-in didn’t finish.' : 'Couldn’t reach Google Drive. Check the connection and try again.');
+  });
 }
 // Turn it on. With a sign-in from any junkdrawer.works project still good, no Google window at all.
 function start() {
@@ -180,8 +210,7 @@ function start() {
   tok = get(KT);
   if (!live()) { signIn(); return; }
   st.on = true; if (!st.email && tok.email) st.email = tok.email; saveSt();
-  setStatus('busy');
-  (st.email ? Promise.resolve() : whoami()).then(sync);
+  sync(); // which asks Google whose the sign-in is first, if it didn't say
 }
 // Google only opens its window from a tap, so this has to run inside a click handler.
 function signIn() {
@@ -287,7 +316,12 @@ if (CLIENT_ID) {
   setInterval(() => { if (!document.hidden && st.on) { if (live()) sync(); else setStatus('tap'); } }, 5 * 60000);
   window.addEventListener('storage', e => { // another tab signed in, stopped, or synced
     if (e.key === KS || e.key === KT) {
-      st = { ...fresh(), ...(get(KS) || {}) }; tok = get(KT);
+      st = { ...fresh(), ...(get(KS) || {}) };
+      // A sign-in another tab or project saved is taken up only if it's for this device's account. If the shared
+      // one was cleared because Google refused it, and it was this page's too, this page lets go of it.
+      const t = get(KT);
+      if (usable(t)) tok = t;
+      else if (!t && e.key === KT && tok && (e.oldValue || '').includes(tok.token)) tok = null;
       if (!st.on) gen++;
       setStatus(st.on ? (busy ? 'busy' : live() ? 'ok' : 'tap') : 'off');
       if (st.on) loadGis();
