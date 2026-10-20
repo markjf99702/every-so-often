@@ -309,18 +309,21 @@ await page.locator('.tag.big').waitFor();
 await phone.ctx.setOffline(false);
 
 // The tools at junkdrawer.works share one address, and so one place to keep offline copies. Starting up, the
-// service worker clears out this tool's old copy and leaves another tool's alone.
+// service worker clears out this tool's old copy and leaves another tool's alone, even one whose name starts
+// with this one's.
 {
   const newPhone = await device();
   await newPhone.page.goto(base + 'icon.svg'); // the same site, but nothing here starts the service worker
   await newPhone.page.evaluate(async () => {
     await (await caches.open('another-tool-v1')).put('another-tool/', new Response('another tool'));
+    await (await caches.open('every-so-often-x-v1')).put('every-so-often-x/', new Response('a tool with a longer name'));
     await (await caches.open('every-so-often-v0')).put('index.html', new Response('an old copy of this one'));
   });
   await newPhone.page.goto(base);
   await newPhone.page.waitForFunction(() => navigator.serviceWorker?.controller?.state === 'activated', null, { timeout: 20000 });
-  const [other, old] = await newPhone.page.evaluate(() => Promise.all(['another-tool-v1', 'every-so-often-v0'].map(n => caches.has(n))));
+  const [other, longer, old] = await newPhone.page.evaluate(() => Promise.all(['another-tool-v1', 'every-so-often-x-v1', 'every-so-often-v0'].map(n => caches.has(n))));
   assert.equal(other, true, 'another tool’s offline copy is left alone');
+  assert.equal(longer, true, 'so is one for a tool whose name starts with this one’s');
   assert.equal(old, false, 'this tool’s old offline copy is cleared out');
   await newPhone.ctx.close();
 }

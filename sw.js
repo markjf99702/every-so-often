@@ -15,9 +15,10 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  // The other tools at junkdrawer.works share this address, and so these caches: clear out only this tool's old ones.
+  // The other tools at junkdrawer.works share this address, and so these caches: clear out only this tool's old ones,
+  // by their exact name, so a tool whose name starts the same way (every-so-often-something-v1) keeps its copy.
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k.startsWith('every-so-often-') && k !== CACHE).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k !== CACHE && /^every-so-often-v[0-9]+$/.test(k)).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
