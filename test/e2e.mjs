@@ -442,6 +442,19 @@ await still.ctx.close();
   assert.deepEqual(await store(p, 'return Object.fromEntries(s.things().map(x => [x.key, M.lastDone(x)]))'),
     { 'replace-alarms': null, tetanus: null, 'eye-exam': twoYears, dentist: twoYears }, 'two years back, unless the job comes round less often');
   assert.match(await tag(p, 'Replace smoke alarms').innerText(), /No date yet: due now/);
+  // A due date more than 11 months off says its year on the list: the dentist was due a year and a half ago, and
+  // the alarms, done today, are next due in ten years. On its own page the year is in the dates below the sticker.
+  assert.match(await tag(p, 'Dentist cleaning').locator('.sticker').innerText(), /^Was due\s+\w{3} \d{1,2} ’\d\d$/i);
+  await tag(p, 'Replace smoke alarms').locator('[data-done]').click();
+  await until(async () => (await tag(p, 'Replace smoke alarms').locator('.tick[disabled]').count()) === 1, 'the list to be redrawn');
+  const [short, long] = await p.evaluate(() => { const { D } = window.everySoOften, n = D.addMonths(D.num(D.today()), 120); return [D.dayText(n), D.dayText(n, true)]; });
+  const year = long.slice(-2);
+  assert.equal(await tag(p, 'Replace smoke alarms').locator('.sticker .d').innerText(), `${short} ’${year}`);
+  await fits(p, 'stickers with years');
+  await tag(p, 'Replace smoke alarms').locator('.tag-body').click();
+  await p.locator('.tag.big').waitFor();
+  assert.equal(await p.locator('.tag.big .sticker .d').innerText(), short);
+  assert.match(await p.locator('.facts').innerText(), new RegExp(long));
   await ctx.close();
 }
 

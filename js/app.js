@@ -42,11 +42,14 @@ function gauge(s, big = false) {
   return `<div class="gauge${big ? ' big' : ''}${s.unknown ? ' unknown' : ''}" style="--f:${pct(s.frac)};--z:${pct(s.soonAt)}" role="img" aria-label="${said}"><i class="zone"></i><i class="fill"></i><i class="line"></i></div>`;
 }
 
-// The sticker in the corner of each tag: when it's next due, written in marker.
-function dueMark(s) {
-  let k = 'Next due', d = D.dayText(s.due);
+// The sticker in the corner of each tag: when it's next due, written in marker. On the list it has the year when
+// that's more than 11 months off; a thing's own page leaves it out, since its big sticker would crowd the name
+// and the date with the year is right below it.
+function dueMark(s, year = true) {
+  const day = n => (year ? D.stickerDay(n, tn()) : D.dayText(n));
+  let k = 'Next due', d = day(s.due);
   if (s.unknown && !s.window) { k = 'Due'; d = 'Now'; }
-  else if (s.window && (s.state === 'due' || s.state === 'overdue')) { k = s.state === 'due' ? 'Due by' : 'Was due'; d = D.dayText(s.by); }
+  else if (s.window && (s.state === 'due' || s.state === 'overdue')) { k = s.state === 'due' ? 'Due by' : 'Was due'; d = day(s.by); }
   else if (s.state === 'overdue') k = 'Was due';
   return `<div class="sticker"><span class="k">${k}</span><span class="d">${esc(d)}</span></div>`;
 }
@@ -267,7 +270,7 @@ function thing(id) {
     <article class="tag big s-${s.state}">
       <div class="tag-end" aria-hidden="true"><i class="eyelet"></i></div>
       <div class="tag-main"><div class="tag-body">
-        <div class="tag-top"><div><p class="meta">${area(item.area)}</p><h1>${esc(item.name)}</h1><p class="rule">${esc(D.ruleText(item.rule))}</p></div>${dueMark(s)}</div>
+        <div class="tag-top"><div><p class="meta">${area(item.area)}</p><h1>${esc(item.name)}</h1><p class="rule">${esc(D.ruleText(item.rule))}</p></div>${dueMark(s, false)}</div>
         ${gauge(s, true)}
         <p class="state">${esc(D.statusText(s, t))}</p>
         <dl class="facts">

@@ -191,6 +191,9 @@ export function ruleText(rule) {
 }
 
 export const dayText = (n, withYear = false) => new Date(n * MS).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' } : {}) });
+// The date on a due sticker: "Oct 13", with a short year ("Oct 13 ’27") when it's more than 11 months from today
+// either way, so a job that's years off doesn't read like next month.
+export const stickerDay = (n, t) => dayText(n) + (n > addMonths(t, 11) || n < addMonths(t, -11) ? ` ’${key(n).slice(2, 4)}` : '');
 const windowText = w => SEASONS.includes(w) ? `this ${w}` : `in ${w}`;
 
 // One plain line saying where a thing stands.

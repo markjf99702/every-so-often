@@ -250,6 +250,20 @@ test('words', () => {
   assert.equal(D.ago(null, 0), 'not sure');
 });
 
+test('a due sticker has the year when the date is more than 11 months away, either way', () => {
+  const sd = (d, today) => D.stickerDay(n(d), n(today));
+  assert.equal(sd('2026-11-01', '2026-10-13'), 'Nov 1');
+  assert.equal(sd('2027-10-13', '2026-10-13'), 'Oct 13 ’27', 'a yearly job done today');
+  assert.equal(sd('2036-10-13', '2026-10-13'), 'Oct 13 ’36', 'a 10-year job');
+  assert.equal(sd('2027-09-13', '2026-10-13'), 'Sep 13', '11 months on');
+  assert.equal(sd('2027-09-14', '2026-10-13'), 'Sep 14 ’27', 'a day more');
+  assert.equal(sd('2025-11-13', '2026-10-13'), 'Nov 13', '11 months back');
+  assert.equal(sd('2025-11-12', '2026-10-13'), 'Nov 12 ’25', 'a day more');
+  assert.equal(sd('2027-02-28', '2026-03-31'), 'Feb 28', '11 months on from the end of March');
+  assert.equal(sd('2027-03-01', '2026-03-31'), 'Mar 1 ’27');
+  assert.equal(sd('2000-01-05', '2026-10-13'), 'Jan 5 ’00');
+});
+
 test('rules are checked', () => {
   assert.deepEqual(D.cleanRule({ kind: 'every', n: '3', unit: 'month' }), every(3, 'month'));
   assert.equal(D.cleanRule({ kind: 'every', n: 0, unit: 'month' }), null);
