@@ -1,6 +1,7 @@
 // Uses the app in Chromium through the real page:  node test/e2e.mjs  (needs Playwright)
 // Someone sets up their list from the starter list, logs jobs done, keeps notes, adds to a calendar and backs
-// it up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. Then three devices save
+// it up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. The labels on tags and
+// groups are checked for contrast, light and dark, in every view. Then three devices save
 // through a stand-in Google Drive (test/fake-google.mjs): turning it on, a second device joining, edits on both,
 // a deletion, an expired sign-in, a sign-in from another project, stopping, a broken file, and erasing mid-sync.
 import { createRequire } from 'node:module';
@@ -422,6 +423,46 @@ await fits(page, 'a thing with a long area name');
   assert.ok(sticker.x + sticker.width <= card.x + card.width, 'the sticker stays on the card');
 }
 await still.ctx.close();
+
+// ================= The labels on tags and groups, light and dark =================
+// Every sticker label and group tape reads at 4.5:1 or better, and a tag's label is the same colour wherever
+// it's shown: grouped by when due, grouped by area, and on its own page.
+for (const colorScheme of ['light', 'dark']) {
+  const { ctx, page: p } = await device({ serviceWorkers: 'block', colorScheme });
+  await p.goto(base);
+  await store(p, `const t = D.num(D.today()), week = { kind: 'every', n: 1, unit: 'week' };
+    for (const [name, area, rule, ago] of [['Overdue job', 'House', week, 10], ['Job due today', 'House', week, 7], ['Job due soon', 'Car', { kind: 'every', n: 90, unit: 'day' }, 80], ['Job due later', 'Car', { kind: 'every', n: 1, unit: 'year' }, 10]])
+      s.log(s.add({ name, area, rule }), D.key(t - ago));`);
+  const colors = {};
+  const check = async where => {
+    const labels = await p.evaluate(() => {
+      const lum = c => { const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      return [...document.querySelectorAll('.sticker .k, .tape')].map(el => {
+        const cs = getComputedStyle(el), [a, b] = [lum(cs.color), lum(cs.backgroundColor)].sort((x, y) => y - x);
+        return { text: el.textContent, state: el.closest('.tag')?.className.match(/\bs-(\w+)/)?.[1], color: cs.color, ratio: (a + 0.05) / (b + 0.05) };
+      });
+    });
+    assert.ok(labels.length, where);
+    for (const l of labels) {
+      assert.ok(l.ratio >= 4.5, `${colorScheme}, ${where}: “${l.text}” reads at ${l.ratio.toFixed(2)}:1`);
+      if (l.state) (colors[l.state] ||= new Set()).add(l.color);
+    }
+  };
+  await p.reload();
+  await group(p, 'overdue').waitFor();
+  await check('grouped by when due');
+  await p.click('[data-view="area"]');
+  await p.locator('.group.g-area').first().waitFor();
+  await check('grouped by area');
+  for (const id of await store(p, 'return s.things().map(x => x.id)')) {
+    await p.goto(base + '#/thing/' + id);
+    await p.locator('.tag.big').waitFor();
+    await check('on a thing’s page');
+  }
+  assert.deepEqual(Object.keys(colors).sort(), ['due', 'later', 'overdue', 'soon'], 'a tag in every state');
+  for (const [state, seen] of Object.entries(colors)) assert.equal(seen.size, 1, `${colorScheme}: the label on a tag that’s ${state} is one colour everywhere`);
+  await ctx.close();
+}
 
 // ================= Google Drive, through the stand-in =================
 const g = fakeGoogle();

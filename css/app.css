@@ -203,9 +203,9 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .fold .n { font-weight: 700; color: var(--muted); font-size: 15px; }
 .fold .chev { width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s; }
 .fold[aria-expanded="false"] .chev { transform: rotate(-45deg); }
-.g-overdue { --band: var(--red); }
+.g-overdue { --band: var(--red); --band-on: #fff; }
 .g-soon { --band: var(--amber); --band-on: #2a1e05; }
-.g-later { --band: var(--green); }
+.g-later { --band: var(--green); --band-on: #fff; }
 .g-area { --band: var(--ink); --band-on: var(--card); }
 .g-area .tape { letter-spacing: .1em; }
 .g-area .in-area { display: none; }
@@ -222,10 +222,15 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
   position: relative; display: flex; min-width: 0;
   filter: drop-shadow(0 1px 1px var(--shadow)) drop-shadow(0 4px 8px color-mix(in srgb, var(--shadow) 55%, transparent));
 }
-.s-overdue { --band: var(--red); --band-ink: var(--red-ink); }
-.s-due { --band: var(--orange); --band-ink: var(--orange-ink); }
+/* Each state sets its own label colour (--band-on), so a tag's sticker reads the same in any group. */
+.s-overdue { --band: var(--red); --band-ink: var(--red-ink); --band-on: #fff; }
+.s-due { --band: var(--orange); --band-ink: var(--orange-ink); --band-on: #2a1e05; }
 .s-soon { --band: var(--amber); --band-ink: var(--amber-ink); --band-on: #2a1e05; }
-.s-later { --band: var(--green); --band-ink: var(--green-ink); }
+.s-later { --band: var(--green); --band-ink: var(--green-ink); --band-on: #fff; }
+/* The red and green are lighter in the dark, so the labels on them are dark there. */
+@media (prefers-color-scheme: dark) {
+  .g-overdue, .s-overdue, .g-later, .s-later { --band-on: #16171a; }
+}
 .tag-end {
   flex: none; width: 34px; display: grid; place-items: center;
   background: var(--band);
