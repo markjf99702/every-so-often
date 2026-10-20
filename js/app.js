@@ -586,7 +586,10 @@ function when() {
           const c = byKey[li.dataset.key], sel = li.querySelector('select').value, d = li.querySelector('input').value;
           const id = M.newId();
           b.put({ id, key: c.key, name: c.name, area: c.area, rule: c.rule, remember: '', created: T });
-          const day = sel === 'date' ? (D.isKey(d) && d <= T ? d : '') : sel === '' ? '' : D.key(t - +sel);
+          // "Two years or more" can't place a job that comes round less often than that, like the smoke alarms every
+          // 10 years: two years back would put it eight years away. It gets no date instead, so it shows as due now.
+          const long = sel === '730' && D.ruleDays(c.rule) > 731;
+          const day = sel === 'date' ? (D.isKey(d) && d <= T ? d : '') : sel === '' || long ? '' : D.key(t - +sel);
           if (day) b.log(id, day, '');
         }
       });

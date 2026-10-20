@@ -424,6 +424,27 @@ await fits(page, 'a thing with a long area name');
 }
 await still.ctx.close();
 
+// ================= The starter list, for jobs done long ago =================
+// "Two years or more" logs a date two years back, except for jobs that come round less often than that (the smoke
+// alarms, every 10 years): those get no date, so they show as due now rather than eight years away.
+{
+  const { ctx, page: p } = await device({ serviceWorkers: 'block' });
+  await p.goto(base + '#/start');
+  const keys = ['replace-alarms', 'tetanus', 'eye-exam', 'dentist'];
+  for (const k of keys) await p.click(`.pick[data-key="${k}"]`);
+  await p.click('#pickNext');
+  await p.waitForURL(/#\/start\/when$/);
+  for (const k of keys) await p.selectOption(`li[data-key="${k}"] select`, '730');
+  await p.click('text=Add 4 things');
+  await p.waitForURL(/#\/$/);
+  await p.locator('.group').first().waitFor();
+  const twoYears = await dayAgo(p, 730);
+  assert.deepEqual(await store(p, 'return Object.fromEntries(s.things().map(x => [x.key, M.lastDone(x)]))'),
+    { 'replace-alarms': null, tetanus: null, 'eye-exam': twoYears, dentist: twoYears }, 'two years back, unless the job comes round less often');
+  assert.match(await tag(p, 'Replace smoke alarms').innerText(), /No date yet: due now/);
+  await ctx.close();
+}
+
 // ================= The labels on tags and groups, light and dark =================
 // Every sticker label and group tape reads at 4.5:1 or better, and a tag's label is the same colour wherever
 // it's shown: grouped by when due, grouped by area, and on its own page.
