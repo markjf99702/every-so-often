@@ -512,6 +512,30 @@ test('the store saves to localStorage, keeps sample data apart, and merges backu
   delete globalThis.localStorage;
 });
 
+test('a thing a backup brings back stays back after the next sync, and the backup’s old details don’t win', async () => {
+  const mem = new Map();
+  globalThis.localStorage = { getItem: key => (mem.has(key) ? mem.get(key) : null), setItem: (key, v) => mem.set(key, String(v)), removeItem: key => mem.delete(key) };
+  const { store } = await import('../js/store.js');
+  store.reload();
+  const vent = store.add({ name: 'Clean the dryer vent', area: 'House', rule: every(1, 'year') });
+  const bed = store.add({ name: 'Rotate the mattress', area: 'House', rule: every(3, 'month') });
+  const backup = store.backup();
+  // Since the backup: the vent was deleted (here, or on another device and synced here) and the mattress was
+  // renamed. Drive has both changes.
+  store.remove(vent);
+  store.update(bed, { name: 'Turn the mattress' });
+  const drive = store.doc;
+  assert.equal(store.restoreBackup(backup), 1);
+  assert.ok(store.thing(vent), 'the vent is back');
+  assert.equal(store.thing(bed).name, 'Turn the mattress', 'the newer name stays');
+  // The next sync, either way round: the vent stays back, and the newer name stays.
+  for (const next of [M.mergeDocs(store.doc, drive), M.mergeDocs(drive, store.doc)]) {
+    assert.ok(!M.gone(next.items[vent]), 'the vent stays back after a sync');
+    assert.equal(next.items[bed].name, 'Turn the mattress');
+  }
+  delete globalThis.localStorage;
+});
+
 test('junk in this device’s own settings is ignored rather than stopping the page', async () => {
   const mem = new Map();
   globalThis.localStorage = { getItem: key => (mem.has(key) ? mem.get(key) : null), setItem: (key, v) => mem.set(key, String(v)), removeItem: key => mem.delete(key) };

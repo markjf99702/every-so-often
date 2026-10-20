@@ -3,7 +3,8 @@
 // it up; on another phone, with Reduce Motion on, they double-tap and use the keyboard. The labels on tags and
 // groups are checked for contrast, light and dark, in every view. Then three devices save
 // through a stand-in Google Drive (test/fake-google.mjs): turning it on, a second device joining, edits on both,
-// a deletion, an expired sign-in, a sign-in from another project, stopping, a broken file, and erasing mid-sync.
+// a deletion, a backup bringing it back, an expired sign-in, a sign-in from another project, stopping, a broken
+// file, and erasing mid-sync.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -621,6 +622,7 @@ assert.equal(await L.locator('.tag h3', { hasText: 'Gutters' }).count(), 1, 'the
 }
 
 // ---- a deletion ----
+const beforeDeleting = await store(L, 'return s.backup()'); // a backup the laptop saved before it
 await P.goto(base + '#/');
 await tag(P, 'Oil change').locator('.tag-body').click();
 await P.click('[data-act="delete"]');
@@ -630,6 +632,15 @@ assert.ok(Object.values(driveDoc().items).some(x => x.name === 'Oil change' && x
 await syncNow(L);
 assert.equal(await tag(L, 'Oil change').count(), 0, 'gone from the laptop too');
 assert.deepEqual(await names(L), ['Change the furnace filter', 'Gutters', 'Trim nails']);
+
+// ---- a backup brings it back ----
+// The laptop loads its backup from before the deletion: the oil change comes back, and stays back once synced.
+await L.goto(base + '#/settings');
+await L.setInputFiles('#loadBackup', { name: 'every-so-often-backup.json', mimeType: 'application/json', buffer: Buffer.from(beforeDeleting) });
+await until(async () => /Loaded 1 thing from the backup/.test(await L.locator('#toast').innerText()), 'the backup to load');
+await syncNow(L);
+assert.deepEqual(await names(L), ['Change the furnace filter', 'Gutters', 'Oil change', 'Trim nails'], 'still back after a sync');
+assert.ok(liveInDrive().includes('Oil change'), 'and back in Drive');
 
 // ---- an expired sign-in needs a tap ----
 await L.evaluate(() => localStorage.setItem('junkdrawer.google', JSON.stringify({ token: 'tok-expired', exp: Date.now() + 30 * 60000, scope: 'https://www.googleapis.com/auth/drive.file', email: 'mark@gmail.com' })));

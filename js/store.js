@@ -91,7 +91,14 @@ export const store = {
     if (raw?.app !== M.APP || typeof raw.items !== 'object') throw new Error('That file isn’t an Every So Often backup.');
     const incoming = M.cleanDoc(raw);
     const merged = M.mergeDocs(doc, incoming, { first: true });
-    const changed = Object.keys(merged.items).filter(id => M.canon(merged.items[id]) !== M.canon(doc.items[id]) && !M.gone(merged.items[id])).length;
+    // A thing deleted since the backup was saved (here, or on another device and synced here) comes back stamped
+    // newer than its deletion, as Undo does, so the next sync doesn't delete it again. Only those: stamping
+    // everything in the backup would put its old details over newer changes made on other devices.
+    for (const [id, x] of Object.entries(merged.items)) {
+      const was = doc.items[id];
+      if (was && M.gone(was) && !M.gone(x)) merged.items[id] = { ...x, t: Math.max(M.stamp(x), was.del + 1) };
+    }
+    const changed =Object.keys(merged.items).filter(id => M.canon(merged.items[id]) !== M.canon(doc.items[id]) && !M.gone(merged.items[id])).length;
     write(merged);
     return changed;
   },
